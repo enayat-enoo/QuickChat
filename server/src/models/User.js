@@ -56,11 +56,13 @@ const userSchema = new mongoose.Schema(
     contacts: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "userModel",
       },
     ],
   },
   { timestamps: true }
 );
 
-module.exports = new mongoose.model("User", userSchema);
+const userModel = mongoose.model('userModel',userSchema);
+
+module.exports = userModel;

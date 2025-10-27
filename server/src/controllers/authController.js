@@ -1,11 +1,11 @@
-const User = require("../models/User");
+const userModel = require("../models/User");
 const { tokenGenerator } = require("../utils/generateToken");
 const {
   hashPassword,
   hashedPasswordVerifier,
 } = require("../utils/passwordHash");
 
-const secretKey = process.env.SECRET_KEY;
+const secretKey = process.env.SECRET_KEY ;
 const saltRounds = process.env.SALT_ROUNDS;
 
 //User Registration Handler Function
@@ -16,7 +16,7 @@ async function userRegistration(req, res) {
       message: "missing required fields",
     });
   }
-  const user = await User.findOne({ username });
+  const user = await userModel.findOne({ username });
   if (user) {
     return res.status(409).json({ message: "user conflict" });
   }
@@ -24,13 +24,13 @@ async function userRegistration(req, res) {
   const hashedPassword = await hashPassword(password, saltRounds);
 
   try {
-    const userId = await User.create({
+    const userId = await userModel.create({
       name,
       username,
       email,
-      password: hashPassword,
+      password: hashedPassword,
     });
-    return res.status(200).json({ message: "registration sucessfull" });
+    return res.status(200).json({ message: "registration sucessfull",data:userId });
   } catch (error) {
     return res.status(400).json({ message: "some error has ocurred" });
   }
@@ -43,7 +43,7 @@ async function login(req, res) {
     return res.status(409).json({ message: "invalid input" });
   }
   try {
-    const findUser = await User.findOne({ email });
+    const findUser = await userModel.findOne({ email });
     if (!findUser) {
       return res.status(404).json({ message: "no such user exists" });
     }
@@ -65,12 +65,12 @@ async function login(req, res) {
     return res
       .cookie("token", token, {
         httpOnly: true,
-        secure: true,
-        samesite: "none",
+        // secure: true,
+        // samesite: "none",
         maxAge: 24 * 60 * 60 * 1000,
         //for localhost
-        //secure : false,
-        //samsite : "lax"
+        secure : false,
+        samsite : "lax"
       })
       .status(201)
       .json({ message: "login successful" });
