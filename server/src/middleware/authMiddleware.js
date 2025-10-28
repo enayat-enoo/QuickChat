@@ -1,6 +1,5 @@
 const { tokenVerifier } = require("../utils/generateToken");
 
-const secretKey = process.env.SECRET_KEY;
 async function isAuthMiddleware(req, res, next) {
   const token = req.cookies?.token;
   if (!token) {
@@ -8,7 +7,7 @@ async function isAuthMiddleware(req, res, next) {
   }
 
   try {
-    const decoded = await tokenVerifier(token, secretKey);
+    const decoded = await tokenVerifier(token);
     req.user = decoded;
     next();
   } catch (err) {

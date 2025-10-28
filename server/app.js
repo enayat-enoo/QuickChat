@@ -7,7 +7,7 @@ const cookieParser = require("cookie-parser");
 const connectToDb = require("./src/config/db");
 require("dotenv").config();
 
-const PORT = process.env.PORT || 8000;
+
 const url = process.env.DB_URL;
 
 connectToDb(url)
@@ -27,6 +27,11 @@ app.use(cors());
 app.use("/api", authRouter);
 app.use("/api/message", messageRouter);
 
-app.listen(PORT, () => {
-  `App is listening at port ${PORT}`;
-});
+
+//Global Error Handler
+app.use((err,req,res,next) =>{
+  console.log(err);
+  res.status(500).json({error : "Something went wrong"})
+})
+
+module.exports = app;
