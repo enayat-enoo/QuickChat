@@ -5,8 +5,7 @@ const {
   hashedPasswordVerifier,
 } = require("../utils/passwordHash");
 
-const secretKey = process.env.SECRET_KEY ;
-const saltRounds = process.env.SALT_ROUNDS;
+const saltRounds = process.env.SALT_ROUNDS || 10;
 
 //User Registration Handler Function
 async function userRegistration(req, res) {
@@ -30,7 +29,9 @@ async function userRegistration(req, res) {
       email,
       password: hashedPassword,
     });
-    return res.status(200).json({ message: "registration sucessfull",data:userId });
+    return res
+      .status(200)
+      .json({ message: "registration sucessfull", data: userId });
   } catch (error) {
     return res.status(400).json({ message: "some error has ocurred" });
   }
@@ -55,44 +56,36 @@ async function login(req, res) {
 
     const payload = {
       id: findUser._id,
-      name: findUser.name,
       username: findUser.username,
-      email: findUser.email,
     };
 
-    const token = await tokenGenerator(payload, secretKey);
+    const token = await tokenGenerator(payload);
 
     return res
       .cookie("token", token, {
         httpOnly: true,
-        // secure: true,
-        // samesite: "none",
+        secure: false,
+        sameSite: "lax",
         maxAge: 24 * 60 * 60 * 1000,
-        //for localhost
-        secure : false,
-        samsite : "lax"
       })
       .status(201)
-      .json({ message: "login successful" });
+      .json({ message: "login successful" , user : {id : findUser._id, username : findUser.username, name : findUser.name,avatar : findUser.avatar}});
   } catch (error) {
     return res.status(500).json({ message: "server Error" });
   }
 }
 
 //Logout Handler function
-async function logout(req,res){
-    return res.clearCookie("token",{
-        httpOnly : true,
-        secure : true,
-        samesite : "none",
-        //for localhost
-        secure : false,
-        samesite : lax
-    })
+async function logout(req, res) {
+  return res.clearCookie("token", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax"
+  }).status(200).json({ message: "logout successful" });
 }
 
 module.exports = {
   userRegistration,
   login,
-  logout
-}
+  logout,
+};

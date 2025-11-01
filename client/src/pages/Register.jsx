@@ -1,17 +1,50 @@
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
+import axios from "axios";
+ 
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showRepeat, setShowRepeat] = useState(false);
   const [avatar, setAvatar] = useState(null);
+  const [name,setName] = useState("");
+  const [email,setEmail] = useState("");
+  const [username,setUsername] = useState("");
+  const [password,setPassword] = useState("");
+  const [confirmPassword,setConfirmPassword] = useState("");
   const navigate = useNavigate();
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) setAvatar(URL.createObjectURL(file));
   };
+
+  function registerHandler(e){
+    e.preventDefault();
+    if(!name || !email || !username || !password || !confirmPassword){
+      return alert("All fields are required");
+    }
+    if(password !== confirmPassword){
+      return alert("Password and Confirm Password do not match");
+    }
+    //API call
+    axios.post('http://localhost:8001/api/register',{
+      name,
+      email,
+      username,
+      password,
+      confirmPassword,
+      avatar
+    })
+    .then((res)=>{
+      //Business logic
+      navigate('/login');
+      console.log(res);
+    })
+    .catch((err)=>{
+      console.log(err);
+    })
+  }
 
   return (
     <div className="min-h-screen bg-[#0d1117] flex items-center justify-center font-sans">
@@ -58,21 +91,27 @@ export default function Register() {
             />
           </div>
 
-          <form className="grid grid-cols-2 gap-4 w-full max-w-md">
+          <form className="grid grid-cols-2 gap-4 w-full max-w-md" onSubmit={registerHandler}>
             <input
               type="text"
               placeholder="Full Name"
               className="bg-[#20262e] text-gray-200 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+              value={name}
+              onChange={(e)=>setName(e.target.value)}
             />
             <input
               type="text"
               placeholder="Username"
               className="bg-[#20262e] text-gray-200 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+              value={username}
+              onChange={(e)=>setUsername(e.target.value)}
             />
             <input
               type="email"
               placeholder="Email"
               className="col-span-2 bg-[#20262e] text-gray-200 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+              value={email}
+              onChange={(e)=>setEmail(e.target.value)}
             />
 
             <div className="relative">
@@ -80,6 +119,8 @@ export default function Register() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 className="bg-[#20262e] w-full text-gray-200 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                value={password}
+                onChange={(e)=>setPassword(e.target.value)}
               />
               <button
                 type="button"
@@ -95,6 +136,8 @@ export default function Register() {
                 type={showRepeat ? "text" : "password"}
                 placeholder="Repeat"
                 className="bg-[#20262e] w-full text-gray-200 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                value={confirmPassword}
+                onChange={(e)=>setConfirmPassword(e.target.value)}
               />
               <button
                 type="button"

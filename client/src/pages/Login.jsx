@@ -1,10 +1,35 @@
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
+import { useContext } from "react";
+import  axios from "axios";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const { setUser } = useContext(AuthContext);
+
+  function loginHandler(e){
+      e.preventDefault();
+      if(!email || !password){
+        return alert("All fields are required");
+      }
+      axios.post('http://localhost:8001/api/login',{
+        email,
+        password,
+      },{withCredentials: true})
+      .then((res)=>{
+        setUser(res.data.user);
+        navigate('/');
+        console.log(res);
+      })
+      .catch((err)=>{
+        console.log(err);
+      })
+  }
 
   return (
     <div className="min-h-screen bg-[#0d1117] flex items-center justify-center font-sans">
@@ -24,11 +49,13 @@ export default function Login() {
         <div className="w-[60%] bg-[#161b22] flex flex-col items-center justify-center relative px-10">
           <h2 className="text-white text-2xl font-semibold mb-10">LOG IN</h2>
 
-          <form className="w-full max-w-md space-y-5">
+          <form className="w-full max-w-md space-y-5" onSubmit={loginHandler}>
             <input
               type="email"
               placeholder="Email or Username"
               className="w-full bg-[#20262e] text-gray-200 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+              value={email}
+              onChange={(e)=>setEmail(e.target.value)}
             />
 
             <div className="relative">
@@ -36,6 +63,8 @@ export default function Login() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 className="w-full bg-[#20262e] text-gray-200 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                value={password}
+                onChange={(e)=>setPassword(e.target.value)}
               />
               <button
                 type="button"

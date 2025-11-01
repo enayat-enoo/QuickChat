@@ -5,6 +5,8 @@ const messageRouter = require("./src/routes/messageRoutes");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectToDb = require("./src/config/db");
+const userInfoRouter = require("./src/routes/userInfoRoutes");
+const isAuthMiddleware = require("./src/middleware/authMiddleware");
 require("dotenv").config();
 
 
@@ -21,11 +23,18 @@ connectToDb(url)
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-app.use(cors());
+app.use(cors(
+  {
+    origin : process.env.CLIENT_URL,
+    credentials : true
+  }
+));
 
 //routes
 app.use("/api", authRouter);
 app.use("/api/message", messageRouter);
+app.use("/api/user",isAuthMiddleware, userInfoRouter);
+
 
 
 //Global Error Handler

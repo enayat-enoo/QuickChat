@@ -1,17 +1,35 @@
 import { MessageSquare, LogOut, Settings, UserPlus } from "lucide-react";
+import { useContext } from "react";
+import axios from "axios";
+import { AuthContext } from "../context/AuthContext";
 
 export default function HomePage() {
-  const user = {
-    name: "John Doe",
-    email: "john@example.com",
-    avatar: "https://via.placeholder.com/80x80/1e1e1e/ffffff?text=JD",
-  };
+  // const user = {
+  //   name: "John Doe",
+  //   email: "john@example.com",
+  //   avatar: "https://via.placeholder.com/80x80/1e1e1e/ffffff?text=JD",
+  // };
+
+  const {user} = useContext(AuthContext);
+
 
   const contacts = [
     { id: 1, name: "Alice", lastMsg: "Hey there!", active: true },
     { id: 2, name: "Bob", lastMsg: "Let's meet tomorrow." },
     { id: 3, name: "Charlie", lastMsg: "Typing..." },
   ];
+
+  function logoutHandler(){
+      axios.get('http://localhost:8001/api/logout', {withCredentials: true})
+      .then((res)=>{
+          //Business logic
+          window.location.reload();
+          console.log(res);
+      })
+      .catch((err)=>{
+          console.log(err);
+      })
+  }
 
   return (
     <div className="min-h-screen bg-[#0d1117] flex items-center justify-center font-sans text-white">
@@ -28,7 +46,7 @@ export default function HomePage() {
               />
               <div>
                 <h2 className="font-semibold text-lg">{user.name}</h2>
-                <p className="text-sm text-gray-300">{user.email}</p>
+                <p className="text-sm text-gray-300">{user.username}</p>
               </div>
             </div>
 
@@ -61,7 +79,8 @@ export default function HomePage() {
             <button className="flex items-center text-gray-300 hover:text-white gap-2 text-sm">
               <Settings size={18} /> Settings
             </button>
-            <button className="flex items-center text-gray-300 hover:text-white gap-2 text-sm">
+            <button className="flex items-center text-gray-300 hover:text-white gap-2 text-sm"
+            onClick={logoutHandler}>
               <LogOut size={18} /> Logout
             </button>
           </div>
