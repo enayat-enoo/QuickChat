@@ -1,16 +1,19 @@
-import { MessageSquare, LogOut, Settings, UserPlus } from "lucide-react";
+import {
+  MessageSquare,
+  LogOut,
+  Settings,
+  UserPlus,
+  UserSearch,
+} from "lucide-react";
 import { useContext } from "react";
 import axios from "axios";
+import { useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 
 export default function HomePage() {
-  // const user = {
-  //   name: "John Doe",
-  //   email: "john@example.com",
-  //   avatar: "https://via.placeholder.com/80x80/1e1e1e/ffffff?text=JD",
-  // };
-
-  const {user} = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
+  const [searchUser, setSearchUser] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
 
 
   const contacts = [
@@ -19,16 +22,30 @@ export default function HomePage() {
     { id: 3, name: "Charlie", lastMsg: "Typing..." },
   ];
 
-  function logoutHandler(){
-      axios.get('http://localhost:8001/api/logout', {withCredentials: true})
-      .then((res)=>{
-          //Business logic
-          window.location.reload();
-          console.log(res);
+  function logoutHandler() {
+    axios
+      .get("http://localhost:8001/api/logout", { withCredentials: true })
+      .then(() => {
+        window.location.reload();
       })
-      .catch((err)=>{
-          console.log(err);
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+
+  function userSearchHandler() {
+    if (!searchUser.trim()) return; //Stop if empty
+    axios
+      .get(`http://localhost:8001/api/user/search?username=${searchUser}`, {
+        withCredentials: true,
       })
+      .then((res) => {
+        setSearchUser("");
+        setSearchResults([res.data.data]);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
 
   return (
@@ -53,24 +70,50 @@ export default function HomePage() {
             {/* Contacts Header */}
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-gray-300 text-sm font-semibold">Chats</h3>
-              <button className="bg-white text-black rounded-md px-2 py-1 text-xs flex items-center gap-1 hover:bg-gray-200 transition">
-                <UserPlus size={14} /> Add
+              <button
+                className="bg-white text-black rounded-md px-2 py-1 text-xs flex items-center gap-1 hover:bg-gray-200 transition"
+                onChange={(e) => {
+                  setSearchUser(e.target.value);
+                  if (e.target.value === "") setSearchResults([]);
+                }}
+              >
+                <UserPlus size={14} onClick={userSearchHandler} />
+                <input
+                  type="text"
+                  placeholder="search user"
+                  value={searchUser}
+                  onChange={(e) => setSearchUser(e.target.value)}
+                />
               </button>
             </div>
 
             {/* Contacts List */}
             <div className="space-y-3 overflow-y-auto max-h-[400px] pr-2">
-              {contacts.map((c) => (
-                <div
-                  key={c.id}
-                  className={`p-3 rounded-lg cursor-pointer ${
-                    c.active ? "bg-[#161b22]" : "hover:bg-[#2a2f3a]"
-                  }`}
-                >
-                  <p className="font-medium">{c.name}</p>
-                  <p className="text-sm text-gray-400 truncate">{c.lastMsg}</p>
-                </div>
-              ))}
+              {/* If search results exist, show them */}
+              {searchResults.length > 0
+                ? searchResults.map((user) => (
+                    <div
+                      key={user._id}
+                      className="p-3 rounded-lg cursor-pointer hover:bg-[#2a2f3a]"
+                    >
+                      <p className="font-medium">{user.name}</p>
+                      <p className="text-sm text-gray-400">@{user.username}</p>
+                    </div>
+                  ))
+                : /* Show default contacts */
+                  contacts.map((c) => (
+                    <div
+                      key={c.id}
+                      className={`p-3 rounded-lg cursor-pointer ${
+                        c.active ? "bg-[#161b22]" : "hover:bg-[#2a2f3a]"
+                      }`}
+                    >
+                      <p className="font-medium">{c.name}</p>
+                      <p className="text-sm text-gray-400 truncate">
+                        {c.lastMsg}
+                      </p>
+                    </div>
+                  ))}
             </div>
           </div>
 
@@ -79,8 +122,10 @@ export default function HomePage() {
             <button className="flex items-center text-gray-300 hover:text-white gap-2 text-sm">
               <Settings size={18} /> Settings
             </button>
-            <button className="flex items-center text-gray-300 hover:text-white gap-2 text-sm"
-            onClick={logoutHandler}>
+            <button
+              className="flex items-center text-gray-300 hover:text-white gap-2 text-sm"
+              onClick={logoutHandler}
+            >
               <LogOut size={18} /> Logout
             </button>
           </div>
@@ -88,23 +133,8 @@ export default function HomePage() {
 
         {/* Chat Area */}
         <div className="w-[70%] bg-[#161b22] p-10 flex flex-col justify-center items-center relative">
-          {/* <div className="absolute top-5 right-5 flex gap-2">
-            {["RU", "DE", "EN"].map((lang) => (
-              <button
-                key={lang}
-                className={`px-3 py-1 rounded-md text-sm ${
-                  lang === "EN"
-                    ? "bg-gray-700 text-white"
-                    : "text-gray-400 hover:text-white"
-                }`}
-              >
-                {lang}
-              </button>
-            ))}
-          </div> */}
-
           <MessageSquare className="text-gray-600 w-20 h-20 mb-6" />
-          <h2 className="text-2xl font-semibold">Welcome to  QuicKChat</h2>
+          <h2 className="text-2xl font-semibold">Welcome to QuicKChat</h2>
           <p className="text-gray-400 text-sm mt-2">
             Select a chat from the left or start a new conversation.
           </p>
