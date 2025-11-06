@@ -1,26 +1,35 @@
-import {
-  MessageSquare,
-  LogOut,
-  Settings,
-  UserPlus,
-  UserSearch,
-} from "lucide-react";
-import { useContext } from "react";
+import { MessageSquare, LogOut, Settings, UserSearch } from "lucide-react";
+import { useContext, useEffect } from "react";
 import axios from "axios";
 import { useState } from "react";
 import { AuthContext } from "../context/AuthContext";
+import Sidebar from "../components/Sidebar";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { searchUser } from "../store/userSlice";
 
 export default function HomePage() {
   const { user } = useContext(AuthContext);
-  const [searchUser, setSearchUser] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [contacts, setContacts] = useState([]);
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { searchResults } = useSelector((state) => state.user);
 
 
-  const contacts = [
-    { id: 1, name: "Alice", lastMsg: "Hey there!", active: true },
-    { id: 2, name: "Bob", lastMsg: "Let's meet tomorrow." },
-    { id: 3, name: "Charlie", lastMsg: "Typing..." },
-  ];
+  useEffect(() => {
+    axios
+      .get("http://localhost:8001/api/message/getchats", {
+        withCredentials: true,
+      })
+      .then((res) => {
+        setContacts(res.data.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }, []);
 
   function logoutHandler() {
     axios
@@ -34,18 +43,7 @@ export default function HomePage() {
   }
 
   function userSearchHandler() {
-    if (!searchUser.trim()) return; //Stop if empty
-    axios
-      .get(`http://localhost:8001/api/user/search?username=${searchUser}`, {
-        withCredentials: true,
-      })
-      .then((res) => {
-        setSearchUser("");
-        setSearchResults([res.data.data]);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    dispatch(searchUser(userSearch));
   }
 
   return (
@@ -73,16 +71,15 @@ export default function HomePage() {
               <button
                 className="bg-white text-black rounded-md px-2 py-1 text-xs flex items-center gap-1 hover:bg-gray-200 transition"
                 onChange={(e) => {
-                  setSearchUser(e.target.value);
-                  if (e.target.value === "") setSearchResults([]);
+                  setUserSearch(e.target.value);
                 }}
               >
-                <UserPlus size={14} onClick={userSearchHandler} />
+                <UserSearch size={14} onClick={userSearchHandler} />
                 <input
                   type="text"
                   placeholder="search user"
-                  value={searchUser}
-                  onChange={(e) => setSearchUser(e.target.value)}
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
                 />
               </button>
             </div>
@@ -90,30 +87,21 @@ export default function HomePage() {
             {/* Contacts List */}
             <div className="space-y-3 overflow-y-auto max-h-[400px] pr-2">
               {/* If search results exist, show them */}
-              {searchResults.length > 0
-                ? searchResults.map((user) => (
-                    <div
-                      key={user._id}
-                      className="p-3 rounded-lg cursor-pointer hover:bg-[#2a2f3a]"
-                    >
-                      <p className="font-medium">{user.name}</p>
-                      <p className="text-sm text-gray-400">@{user.username}</p>
-                    </div>
-                  ))
-                : /* Show default contacts */
-                  contacts.map((c) => (
-                    <div
-                      key={c.id}
-                      className={`p-3 rounded-lg cursor-pointer ${
-                        c.active ? "bg-[#161b22]" : "hover:bg-[#2a2f3a]"
-                      }`}
-                    >
-                      <p className="font-medium">{c.name}</p>
-                      <p className="text-sm text-gray-400 truncate">
-                        {c.lastMsg}
-                      </p>
-                    </div>
-                  ))}
+              {searchResults.length > 0 ? (
+                searchResults.map((user) => (
+                  <div
+                    key={user._id}
+                    className="p-3 rounded-lg cursor-pointer hover:bg-[#2a2f3a]"
+                    onClick={() => navigate(`/chat/${user.data.id}`)}
+                  >
+                    <p className="font-medium">{user.data.name}</p>
+                    <p className="text-sm text-gray-400">@{user.data.username}</p>
+                  </div>
+                ))
+              ) : (
+                /* Show default contacts */
+                <Sidebar contacts={contacts} />
+              )}
             </div>
           </div>
 

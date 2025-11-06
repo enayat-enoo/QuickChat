@@ -17,6 +17,10 @@ const messageSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    chatId : {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "chatModel",
+    },
     seen: {
       type: Boolean,
       default: false,

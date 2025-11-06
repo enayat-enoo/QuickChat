@@ -32,7 +32,7 @@ app.use(cors(
 
 //routes
 app.use("/api", authRouter);
-app.use("/api/message", messageRouter);
+app.use("/api/message", isAuthMiddleware ,messageRouter);
 app.use("/api/user", isAuthMiddleware, userInfoRouter);
 
 

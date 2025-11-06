@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import { useEffect, useState, useContext } from "react";
+import { useSelector,useDispatch } from "react-redux";
+import { searchUser } from "../store/userSlice";
 import {
   LogOut,
   Settings,
@@ -7,25 +9,38 @@ import {
   Smile,
   Paperclip,
   Mic,
+  Phone,
+  Video,
 } from "lucide-react";
-import { Search, Phone, Video } from "lucide-react";
+
+import Sidebar from "../components/Sidebar";
+import ChatLoader from "../components/ChatLoader";
+import { AuthContext } from "../context/AuthContext";
+import { useParams } from "react-router-dom";
 
 export default function ChatPage() {
   const [message, setMessage] = useState("");
-  const user = "you@example.com";
+  const [loading, setLoading] = useState(false);
+  const { user } = useContext(AuthContext);
+
+
+  const {searchResults} = useSelector((state)=>state.user);
+  console.log("searchResults",searchResults);
+
 
   const contacts = [
-    { id: 1, name: "Alice", lastMsg: "Hey there!", active: true },
+    { id: 1, name: "john", lastMsg: "Hey there!", active: true },
     { id: 2, name: "Bob", lastMsg: "Working on a project" },
     { id: 3, name: "Charlie", lastMsg: "Typing..." },
   ];
 
-  const messages = [
-    { id: 1, text: "Hey, how are you?", sender: "alice@example.com" },
-    { id: 2, text: "I'm good, building GENESIS chat 💬", sender: user },
-    { id: 3, text: "Nice UI!!", sender: "alice@example.com" },
-    { id: 4, text: "Thanks 🔥", sender: user },
-  ];
+  let messages = [];
+  // const messages = [
+  //   { id: 1, text: "Hey, how are you?", sender: "john@example.com" },
+  //   { id: 2, text: "I'm good, building Quickchat 💬", sender: user },
+  //   { id: 3, text: "Nice UI!!", sender: "john@example.com" },
+  //   { id: 4, text: "Thanks 🔥", sender: user },
+  // ];
 
   const sendMessage = (e) => {
     e.preventDefault();
@@ -45,8 +60,8 @@ export default function ChatPage() {
                 className="w-12 h-12 rounded-full border border-gray-400"
               />
               <div>
-                <h2 className="text-white font-semibold">You</h2>
-                <p className="text-xs text-gray-300">you@example.com</p>
+                <h2 className="text-white font-semibold">{user.name}</h2>
+                <p className="text-xs text-gray-300">@{user.username}</p>
               </div>
             </div>
 
@@ -57,19 +72,7 @@ export default function ChatPage() {
               </button>
             </div>
 
-            <div className="space-y-2 overflow-y-auto max-h-[75vh] pr-1">
-              {contacts.map((c) => (
-                <div
-                  key={c.id}
-                  className={`p-3 rounded-lg cursor-pointer ${
-                    c.active ? "bg-[#161b22]" : "hover:bg-[#2a2f3a]"
-                  }`}
-                >
-                  <p className="text-white text-sm font-medium">{c.name}</p>
-                  <p className="text-xs text-gray-300 truncate">{c.lastMsg}</p>
-                </div>
-              ))}
-            </div>
+            <Sidebar contacts={contacts} />
           </div>
 
           <div className="flex justify-between text-gray-300 text-sm border-t border-gray-600 pt-3">
@@ -83,84 +86,91 @@ export default function ChatPage() {
         </div>
 
         {/* Chat section */}
-        <div className="flex-1 flex flex-col bg-[#161b22]">
+        {loading ? (
+          <ChatLoader />
+        ) : (
           <div className="flex-1 flex flex-col bg-[#161b22]">
-            {/* Top bar */}
-            <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-700">
-              <div className="flex items-center gap-3">
-                <img
-                  src="https://via.placeholder.com/45x45/1e1e1e/ffffff?text=A"
-                  className="w-10 h-10 rounded-full border border-gray-500"
-                />
-                <div>
-                  <h3 className="text-white font-semibold text-sm">Alice</h3>
-                  <p className="text-xs text-green-400">Online</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-5 text-gray-300">
-                <button className="hover:text-white">
-                  <Phone size={20} />
-                </button>
-                <button className="hover:text-white">
-                  <Video size={25} />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {messages.map((msg) => {
-              const isMine = msg.sender === user;
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex ${isMine ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`px-4 py-2 rounded-xl max-w-[70%] text-sm ${
-                      isMine
-                        ? "bg-[#3c2a55] text-white"
-                        : "bg-[#20262e] text-gray-200"
-                    }`}
-                  >
-                    {msg.text}
+            <div className="flex-1 flex flex-col bg-[#161b22]">
+              {/* Top bar */}
+              <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-700">
+                <div className="flex items-center gap-3">
+                  <img
+                    src="https://via.placeholder.com/45x45/1e1e1e/ffffff?text=A"
+                    className="w-10 h-10 rounded-full border border-gray-500"
+                  />
+                  <div>
+                    <h3 className="text-white font-semibold text-sm">{searchResults[0].data.name}</h3>
+                    <p className="text-xs text-green-400">Online</p>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+                <div className="flex items-center gap-5 text-gray-300">
+                  <button className="hover:text-white">
+                    <Phone size={20} />
+                  </button>
+                  <button className="hover:text-white">
+                    <Video size={25} />
+                  </button>
+                </div>
+              </div>
+            </div>
 
-          {/* Input */}
-          <form
-            onSubmit={sendMessage}
-            className="flex items-center gap-2 p-4 border-t border-gray-700 bg-[#151920]"
-          >
-            <button type="button" className="text-gray-400 hover:text-white">
-              <Paperclip size={20} />
-            </button>
-            <button type="button" className="text-gray-400 hover:text-white">
-              <Smile size={20} />
-            </button>
+            {/* Messages */}
 
-            <input
-              className="flex-1 bg-[#20262e] text-gray-200 px-4 py-2 rounded-lg outline-none focus:ring-1 focus:ring-purple-600"
-              placeholder="Type a message..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-            />
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {messages.map((msg) => {
+                const isMine = msg.sender === user;
+                return (
+                  <div
+                    key={msg.id}
+                    className={`flex ${
+                      isMine ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`px-4 py-2 rounded-xl max-w-[70%] text-sm ${
+                        isMine
+                          ? "bg-[#3c2a55] text-white"
+                          : "bg-[#20262e] text-gray-200"
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
-            <button type="button" className="text-gray-400 hover:text-white">
-              <Mic size={20} />
-            </button>
-            <button
-              type="submit"
-              className="bg-white text-black px-3 py-2 rounded-lg font-bold hover:bg-gray-300"
+            {/* Input */}
+            <form
+              onSubmit={sendMessage}
+              className="flex items-center gap-2 p-4 border-t border-gray-700 bg-[#151920]"
             >
-              <Send size={18} />
-            </button>
-          </form>
-        </div>
+              <button type="button" className="text-gray-400 hover:text-white">
+                <Paperclip size={20} />
+              </button>
+              <button type="button" className="text-gray-400 hover:text-white">
+                <Smile size={20} />
+              </button>
+
+              <input
+                className="flex-1 bg-[#20262e] text-gray-200 px-4 py-2 rounded-lg outline-none focus:ring-1 focus:ring-purple-600"
+                placeholder="Type a message..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+
+              <button type="button" className="text-gray-400 hover:text-white">
+                <Mic size={20} />
+              </button>
+              <button
+                type="submit"
+                className="bg-white text-black px-3 py-2 rounded-lg font-bold hover:bg-gray-300"
+              >
+                <Send size={18} />
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );

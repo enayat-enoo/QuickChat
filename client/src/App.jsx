@@ -5,6 +5,7 @@ import ChatPage from "./pages/ChatPage";
 import ProtectedRoute from "./ProtectedRoute";
 import {createBrowserRouter, RouterProvider} from "react-router-dom";
 
+
 let router = createBrowserRouter([
   {
     path : '/',
@@ -19,7 +20,7 @@ let router = createBrowserRouter([
     element : <Login/>
   },
   {
-    path : '/chat',
+    path : '/chat/:id',
     element : <ChatPage/>
   }
 ])

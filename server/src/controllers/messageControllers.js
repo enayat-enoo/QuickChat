@@ -1,5 +1,6 @@
 const messageModel = require("../models/Message");
 const userModel = require("../models/User");
+const chatModel = require("../models/ChatModel");
 
 //send message handler
 async function sendMessage(req, res) {
@@ -15,11 +16,27 @@ async function sendMessage(req, res) {
   }
 
   try {
+    let chat = await chatModel.findOne({
+      participantInfo: { $all: [senderId, receiverId] },
+    });
+    if (!chat) {
+      chat = await chatModel.create({
+        participants: [senderId, receiverId],
+        lastMessage: content,
+        participantInfo: {
+          [senderId]: { unreadCount: 0 },
+          [receiverId]: { unreadCount: 1 },
+        },
+      });
+    }
     const message = await messageModel.create({
       sender: senderId,
       receiver: receiverId,
       content: content,
+      chatId: chat._id,
     });
+    chat.lastMessage = message._id;
+    await chat.save();
     return res.status(200).json({ message: "message sent", data: message });
   } catch (error) {
     console.log(error);
@@ -29,31 +46,43 @@ async function sendMessage(req, res) {
 
 //retrive message handler
 async function getMessage(req, res) {
-  const senderId = req.user.id;
-  const receiverId = req.params.id;
-  if (!receiverId) {
-    return res.status(400).json({ message: "Receiver ID required" });
-  }
-
+  const chatId = req.chatId;
   try {
-    const messages = await messageModel
-      .find({
-        $or: [
-          { sender: senderId, receiver: receiverId },
-          { sender: receiverId, receiver: senderId },
-        ],
-      })
-      .sort({ createdAt: 1 });
-    return res
-      .status(200)
-      .json({ message: "messages retrived", data: messages });
+    const message = await messageModel({ chatId })
+      .sort({ createdAt: 1 })
+      .populate("sender", "name avatar")
+      .exec();
+    return res.status(200).json({
+      message: "message fetched successfully",
+      data: message,
+    });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ message: "some error has occurred" });
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+async function getChats(req, res) {
+  const userId = req.user.id;
+  try {
+    const chatList = await chatModel
+      .find({
+        participants: { $in: [userId] },
+      })
+      .populate("participants", "name username avatar")
+      .populate("lastmessage")
+      .sort({ updateAt: -1 });
+    return res
+      .status(200)
+      .json({ message: "chats fetched successfully", data: chatList });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 }
 
 module.exports = {
   sendMessage,
   getMessage,
+  getChats,
 };
