@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, act } from "react";
 import { useSelector } from "react-redux";
 import axios from "axios";
 import {
@@ -16,39 +16,36 @@ import {
 import Sidebar from "../components/Sidebar";
 import ChatLoader from "../components/ChatLoader";
 import { AuthContext } from "../context/AuthContext";
-import { useParams } from "react-router-dom";
 
 export default function ChatPage() {
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState([]);
   const { user } = useContext(AuthContext);
-
-  const { searchResults } = useSelector((state) => state.user);
+  const [loading, setLoading] = useState(true);
+  const [messages,setMessages] = useState([]);
   const chatList = useSelector((state) => state.chat?.chatList ?? []);
+  const activeChat = useSelector((state) => state.chat.activeChat);
 
-  const receiverId = useParams();
+  const receiverId = activeChat.participants[1]._id;
 
   useEffect(() => {
-    axios
-      .get(
-        `http://localhost:8001/api/message/getmessage`,
-        {
-          params: {
-            id: receiverId.id,
-          },
-        },
-        { withCredentials: true }
-      )
-      .then((res) => {
-        setLoading(false);
-        setMessages([res.data.data]);
-      })
-      .catch((err) => {
-        console.log(err);
-        setLoading(false);
-      });
-  }, []);
+    if (activeChat) {
+      axios
+        .get(
+          `http://localhost:8001/api/message/getmessage?chatId=${activeChat._id}`,
+          {
+            withCredentials: true,
+          }
+        )
+        .then((res) => {
+          setLoading(false);
+          setMessages(res.data.data);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  }, [activeChat]);
+
 
   const sendMessage = (e) => {
     e.preventDefault();
@@ -63,7 +60,7 @@ export default function ChatPage() {
       .post(
         "http://localhost:8001/api/message/sendmessage",
         {
-          id: receiverId.id,
+          id: receiverId,
           message: message,
         },
         {
@@ -130,7 +127,7 @@ export default function ChatPage() {
                   />
                   <div>
                     <h3 className="text-white font-semibold text-sm">
-                      {searchResults[0].data.name}
+                      {activeChat.participants[1].username === user.username ? activeChat.participants[0].username : activeChat.participants[1].username}
                     </h3>
                     <p className="text-xs text-green-400">Online</p>
                   </div>
@@ -150,10 +147,10 @@ export default function ChatPage() {
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.map((msg) => {
-                const isMine = msg.sender === user;
+                const isMine = msg.sender.username === user.username;
                 return (
                   <div
-                    key={msg.id}
+                    key={msg._id}
                     className={`flex ${
                       isMine ? "justify-end" : "justify-start"
                     }`}
@@ -165,7 +162,7 @@ export default function ChatPage() {
                           : "bg-[#20262e] text-gray-200"
                       }`}
                     >
-                      {msg.text}
+                      {msg.content}
                     </div>
                   </div>
                 );

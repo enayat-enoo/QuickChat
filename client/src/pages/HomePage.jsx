@@ -18,7 +18,6 @@ export default function HomePage() {
   const { searchResults } = useSelector((state) => state.user);
   const chatList  = useSelector((state) => state.chat?.chatList ?? []);
 
-
   useEffect(() => {
     dispatch(fetchChatList());
   },[dispatch]);

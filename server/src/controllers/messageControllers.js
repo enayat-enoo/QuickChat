@@ -46,12 +46,13 @@ async function sendMessage(req, res) {
 
 //retrive message handler
 async function getMessage(req, res) {
-  const chatId = req.chatId;
+  const chatId = req.query.chatId;
   try {
-    const message = await messageModel({ chatId })
-      .sort({ createdAt: 1 })
-      .populate("sender", "name avatar")
-      .exec();
+    const message = await messageModel
+      .find({ chatId })
+      .populate("sender", "name username avatar")
+      .populate("receiver", "name username avatar")
+      .sort({ createdAt: 1 });
     return res.status(200).json({
       message: "message fetched successfully",
       data: message,

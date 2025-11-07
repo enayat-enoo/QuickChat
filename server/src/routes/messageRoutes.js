@@ -4,7 +4,7 @@ const messageRouter = express.Router();
 const  { sendMessage, getMessage, getChats } = require('../controllers/messageControllers')
 
 messageRouter.post('/sendmessage',sendMessage);
-messageRouter.get('/getmessage/:id',getMessage);
+messageRouter.get('/getmessage',getMessage);
 messageRouter.get('/getchats',getChats);
 
 module.exports = messageRouter;
