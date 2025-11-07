@@ -22,6 +22,7 @@ const userSlice = createSlice({
         })
         .addCase(searchUser.fulfilled,(state,action)=>{
             state.status = "succeeded";
+            state.searchResults.length = 0;
             state.searchResults.push(action.payload);
         })
         .addCase(searchUser.rejected,(state)=>{

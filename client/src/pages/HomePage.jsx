@@ -7,29 +7,21 @@ import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { searchUser } from "../store/userSlice";
+import { fetchChatList } from "../store/chatSlice";
 
 export default function HomePage() {
   const { user } = useContext(AuthContext);
   const [userSearch, setUserSearch] = useState("");
-  const [contacts, setContacts] = useState([]);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { searchResults } = useSelector((state) => state.user);
+  const chatList  = useSelector((state) => state.chat?.chatList ?? []);
 
 
   useEffect(() => {
-    axios
-      .get("http://localhost:8001/api/message/getchats", {
-        withCredentials: true,
-      })
-      .then((res) => {
-        setContacts(res.data.data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }, []);
+    dispatch(fetchChatList());
+  },[dispatch]);
 
   function logoutHandler() {
     axios
@@ -43,7 +35,9 @@ export default function HomePage() {
   }
 
   function userSearchHandler() {
+    if (!userSearch.trim()) return;
     dispatch(searchUser(userSearch));
+    setUserSearch("");
   }
 
   return (
@@ -68,20 +62,20 @@ export default function HomePage() {
             {/* Contacts Header */}
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-gray-300 text-sm font-semibold">Chats</h3>
-              <button
-                className="bg-white text-black rounded-md px-2 py-1 text-xs flex items-center gap-1 hover:bg-gray-200 transition"
-                onChange={(e) => {
-                  setUserSearch(e.target.value);
-                }}
-              >
-                <UserSearch size={14} onClick={userSearchHandler} />
+              <div className="flex items-center gap-2 bg-white rounded-md px-2 py-1">
+                <UserSearch
+                  size={14}
+                  className="text-black cursor-pointer"
+                  onClick={userSearchHandler}
+                />
                 <input
                   type="text"
+                  className="bg-transparent outline-none text-black text-sm flex-1"
                   placeholder="search user"
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
                 />
-              </button>
+              </div>
             </div>
 
             {/* Contacts List */}
@@ -95,12 +89,14 @@ export default function HomePage() {
                     onClick={() => navigate(`/chat/${user.data.id}`)}
                   >
                     <p className="font-medium">{user.data.name}</p>
-                    <p className="text-sm text-gray-400">@{user.data.username}</p>
+                    <p className="text-sm text-gray-400">
+                      @{user.data.username}
+                    </p>
                   </div>
                 ))
               ) : (
                 /* Show default contacts */
-                <Sidebar contacts={contacts} />
+                <Sidebar contacts={chatList} />
               )}
             </div>
           </div>

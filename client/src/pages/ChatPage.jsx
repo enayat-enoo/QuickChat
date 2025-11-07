@@ -1,6 +1,6 @@
-import { useEffect, useState, useContext } from "react";
-import { useSelector,useDispatch } from "react-redux";
-import { searchUser } from "../store/userSlice";
+import { useState, useContext, useEffect } from "react";
+import { useSelector } from "react-redux";
+import axios from "axios";
 import {
   LogOut,
   Settings,
@@ -21,32 +21,62 @@ import { useParams } from "react-router-dom";
 export default function ChatPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState([]);
   const { user } = useContext(AuthContext);
 
+  const { searchResults } = useSelector((state) => state.user);
+  const chatList = useSelector((state) => state.chat?.chatList ?? []);
 
-  const {searchResults} = useSelector((state)=>state.user);
-  console.log("searchResults",searchResults);
+  const receiverId = useParams();
 
-
-  const contacts = [
-    { id: 1, name: "john", lastMsg: "Hey there!", active: true },
-    { id: 2, name: "Bob", lastMsg: "Working on a project" },
-    { id: 3, name: "Charlie", lastMsg: "Typing..." },
-  ];
-
-  let messages = [];
-  // const messages = [
-  //   { id: 1, text: "Hey, how are you?", sender: "john@example.com" },
-  //   { id: 2, text: "I'm good, building Quickchat 💬", sender: user },
-  //   { id: 3, text: "Nice UI!!", sender: "john@example.com" },
-  //   { id: 4, text: "Thanks 🔥", sender: user },
-  // ];
+  useEffect(() => {
+    axios
+      .get(
+        `http://localhost:8001/api/message/getmessage`,
+        {
+          params: {
+            id: receiverId.id,
+          },
+        },
+        { withCredentials: true }
+      )
+      .then((res) => {
+        setLoading(false);
+        setMessages([res.data.data]);
+      })
+      .catch((err) => {
+        console.log(err);
+        setLoading(false);
+      });
+  }, []);
 
   const sendMessage = (e) => {
     e.preventDefault();
     if (!message.trim()) return;
     setMessage("");
   };
+
+  function messageSender(e) {
+    e.preventDefault();
+    if (!message.trim()) return;
+    axios
+      .post(
+        "http://localhost:8001/api/message/sendmessage",
+        {
+          id: receiverId.id,
+          message: message,
+        },
+        {
+          withCredentials: true,
+        }
+      )
+      .then(() => {
+        setMessage("");
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
 
   return (
     <div className="min-h-screen w-full bg-[#0d1117] flex items-center justify-center font-sans">
@@ -72,7 +102,7 @@ export default function ChatPage() {
               </button>
             </div>
 
-            <Sidebar contacts={contacts} />
+            <Sidebar contacts={chatList} />
           </div>
 
           <div className="flex justify-between text-gray-300 text-sm border-t border-gray-600 pt-3">
@@ -99,7 +129,9 @@ export default function ChatPage() {
                     className="w-10 h-10 rounded-full border border-gray-500"
                   />
                   <div>
-                    <h3 className="text-white font-semibold text-sm">{searchResults[0].data.name}</h3>
+                    <h3 className="text-white font-semibold text-sm">
+                      {searchResults[0].data.name}
+                    </h3>
                     <p className="text-xs text-green-400">Online</p>
                   </div>
                 </div>
@@ -166,7 +198,12 @@ export default function ChatPage() {
                 type="submit"
                 className="bg-white text-black px-3 py-2 rounded-lg font-bold hover:bg-gray-300"
               >
-                <Send size={18} />
+                <Send
+                  size={18}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onClick={messageSender}
+                />
               </button>
             </form>
           </div>

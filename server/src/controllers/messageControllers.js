@@ -5,37 +5,37 @@ const chatModel = require("../models/ChatModel");
 //send message handler
 async function sendMessage(req, res) {
   const senderId = req.user.id;
-  const { receiverId, content } = req.body;
-  if (!receiverId || !content) {
+  const { id, message } = req.body;
+  if (!id || !message) {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
-  const receiverIdVerification = await userModel.findById(receiverId);
+  const receiverIdVerification = await userModel.findById(id);
   if (!receiverIdVerification) {
     return res.status(404).json({ message: "Invalid Receiver" });
   }
 
   try {
     let chat = await chatModel.findOne({
-      participantInfo: { $all: [senderId, receiverId] },
+      participants: { $all: [senderId, id] },
     });
     if (!chat) {
       chat = await chatModel.create({
-        participants: [senderId, receiverId],
-        lastMessage: content,
+        participants: [senderId, id],
+        lastMessage: null,
         participantInfo: {
           [senderId]: { unreadCount: 0 },
-          [receiverId]: { unreadCount: 1 },
+          [id]: { unreadCount: 1 },
         },
       });
     }
-    const message = await messageModel.create({
+    const messageFromDb = await messageModel.create({
       sender: senderId,
-      receiver: receiverId,
-      content: content,
+      receiver: id,
+      content: message,
       chatId: chat._id,
     });
-    chat.lastMessage = message._id;
+    chat.lastMessage = messageFromDb._id;
     await chat.save();
     return res.status(200).json({ message: "message sent", data: message });
   } catch (error) {
@@ -69,8 +69,8 @@ async function getChats(req, res) {
       .find({
         participants: { $in: [userId] },
       })
-      .populate("participants", "name username avatar")
-      .populate("lastmessage")
+      .populate("participants", "name username avatar isOnline")
+      .populate("lastMessage", "content createdAt")
       .sort({ updateAt: -1 });
     return res
       .status(200)
