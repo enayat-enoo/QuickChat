@@ -24,7 +24,6 @@ async function messageSocket(io) {
           lastMessage: message._id,
           updatedAt: Date.now(),
         });
-        console.log(chatId, content, receiverId);
         io.to(userId).emit("getMessage", message);
         io.to(receiverId).emit("getMessage", message);
       } catch (error) {

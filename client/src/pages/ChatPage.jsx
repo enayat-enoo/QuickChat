@@ -17,6 +17,7 @@ import ChatLoader from "../components/ChatLoader";
 import { AuthContext } from "../context/AuthContext";
 import { SocketContext } from "../context/SocketContext";
 
+
 export default function ChatPage() {
   const [message, setMessage] = useState("");
   const { user } = useContext(AuthContext);
@@ -28,7 +29,6 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const receiverId = activeChat.participants[1]._id;
   const chatId = useParams().id;
-  console.log(activeChat);
   useEffect(() => {
     if (activeChat) {
       axios

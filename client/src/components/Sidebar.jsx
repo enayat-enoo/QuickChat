@@ -8,7 +8,6 @@ export default function Sidebar(props) {
   const { contacts} = props;
   const dispatch = useDispatch();
   const { user } = useContext(AuthContext);
-
   return (
     <div>
       {contacts.map((c) => (

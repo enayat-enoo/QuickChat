@@ -1,4 +1,4 @@
-import { MessageSquare,  UserSearch } from "lucide-react";
+import { MessageSquare, UserSearch } from "lucide-react";
 import { useContext, useEffect } from "react";
 import axios from "axios";
 import { useState } from "react";
@@ -9,19 +9,31 @@ import { useDispatch, useSelector } from "react-redux";
 import { searchUser } from "../store/userSlice";
 import { fetchChatList } from "../store/chatSlice";
 import Bottom from "../components/Bottom";
+import { SocketContext } from "../context/SocketContext";
+import { updateChatList } from "../store/chatSlice";
 
 export default function HomePage() {
   const { user } = useContext(AuthContext);
   const [userSearch, setUserSearch] = useState("");
-
+  const { socket } = useContext(SocketContext);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { searchResults } = useSelector((state) => state.user);
-  const chatList  = useSelector((state) => state.chat?.chatList ?? []);
+  const chatList = useSelector((state) => state.chat?.chatList ?? []);
 
   useEffect(() => {
     dispatch(fetchChatList());
-  },[dispatch]);
+  }, [dispatch]);
+
+
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("getMessage", (message) => {
+      dispatch(updateChatList(message));
+    });
+    return ()=>socket.off("newMessage");
+  }, [socket, dispatch]);
 
   function logoutHandler() {
     axios
@@ -103,7 +115,6 @@ export default function HomePage() {
 
           {/* Bottom - Settings/Logout */}
           <Bottom props={{ logoutHandler }} />
-         
         </div>
 
         {/* Chat Area */}
