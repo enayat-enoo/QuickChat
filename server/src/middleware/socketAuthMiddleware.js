@@ -1,9 +1,8 @@
-const tokenVerifier = require('../utils/generateToken');
+const { tokenVerifier } = require('../utils/generateToken');
  function socketAuthMiddleware(io){
  io.use(async (socket,next)=>{
-    const token = socket.handshake.auth.token;
+    const token = socket.handshake.headers.cookie.split(";")[1].split("=")[1];
     const decoded = await tokenVerifier(token);
-
     if(!decoded){
         return next(new Error("Authentication failed"));
     }

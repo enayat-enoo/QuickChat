@@ -1,4 +1,4 @@
-import { MessageSquare, LogOut, Settings, UserSearch } from "lucide-react";
+import { MessageSquare,  UserSearch } from "lucide-react";
 import { useContext, useEffect } from "react";
 import axios from "axios";
 import { useState } from "react";
@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { searchUser } from "../store/userSlice";
 import { fetchChatList } from "../store/chatSlice";
+import Bottom from "../components/Bottom";
 
 export default function HomePage() {
   const { user } = useContext(AuthContext);
@@ -101,17 +102,8 @@ export default function HomePage() {
           </div>
 
           {/* Bottom - Settings/Logout */}
-          <div className="border-t border-gray-600 pt-4 flex justify-between">
-            <button className="flex items-center text-gray-300 hover:text-white gap-2 text-sm">
-              <Settings size={18} /> Settings
-            </button>
-            <button
-              className="flex items-center text-gray-300 hover:text-white gap-2 text-sm"
-              onClick={logoutHandler}
-            >
-              <LogOut size={18} /> Logout
-            </button>
-          </div>
+          <Bottom props={{ logoutHandler }} />
+         
         </div>
 
         {/* Chat Area */}

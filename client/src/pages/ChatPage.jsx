@@ -1,9 +1,8 @@
-import { useState, useContext, useEffect, act } from "react";
+import { useState, useContext, useEffect } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import {
-  LogOut,
-  Settings,
   UserPlus,
   Send,
   Smile,
@@ -12,21 +11,24 @@ import {
   Phone,
   Video,
 } from "lucide-react";
-
+import Bottom from "../components/Bottom";
 import Sidebar from "../components/Sidebar";
 import ChatLoader from "../components/ChatLoader";
 import { AuthContext } from "../context/AuthContext";
+import { SocketContext } from "../context/SocketContext";
 
 export default function ChatPage() {
   const [message, setMessage] = useState("");
   const { user } = useContext(AuthContext);
+  const { socket } = useContext(SocketContext);
   const [loading, setLoading] = useState(true);
-  const [messages,setMessages] = useState([]);
+  const [messages, setMessages] = useState([]);
   const chatList = useSelector((state) => state.chat?.chatList ?? []);
   const activeChat = useSelector((state) => state.chat.activeChat);
-
+  const navigate = useNavigate();
   const receiverId = activeChat.participants[1]._id;
-
+  const chatId = useParams().id;
+  console.log(activeChat);
   useEffect(() => {
     if (activeChat) {
       axios
@@ -46,29 +48,21 @@ export default function ChatPage() {
     }
   }, [activeChat]);
 
-
-  const sendMessage = (e) => {
-    e.preventDefault();
+  function messageSender() {
     if (!message.trim()) return;
+    socket.emit("sendMessage", {
+      chatId: chatId,
+      receiverId : receiverId,
+      content: message,
+    });
     setMessage("");
-  };
+  }
 
-  function messageSender(e) {
-    e.preventDefault();
-    if (!message.trim()) return;
+  function logoutHandler() {
     axios
-      .post(
-        "http://localhost:8001/api/message/sendmessage",
-        {
-          id: receiverId,
-          message: message,
-        },
-        {
-          withCredentials: true,
-        }
-      )
+      .get("http://localhost:8001/api/logout", { withCredentials: true })
       .then(() => {
-        setMessage("");
+        navigate("/login");
       })
       .catch((err) => {
         console.log(err);
@@ -102,14 +96,7 @@ export default function ChatPage() {
             <Sidebar contacts={chatList} />
           </div>
 
-          <div className="flex justify-between text-gray-300 text-sm border-t border-gray-600 pt-3">
-            <button className="flex items-center gap-2 hover:text-white">
-              <Settings size={18} /> Settings
-            </button>
-            <button className="flex items-center gap-2 hover:text-white">
-              <LogOut size={18} /> Logout
-            </button>
-          </div>
+          <Bottom props={{ logoutHandler }} />
         </div>
 
         {/* Chat section */}
@@ -127,7 +114,9 @@ export default function ChatPage() {
                   />
                   <div>
                     <h3 className="text-white font-semibold text-sm">
-                      {activeChat.participants[1].username === user.username ? activeChat.participants[0].username : activeChat.participants[1].username}
+                      {activeChat.participants[1].username === user.username
+                        ? activeChat.participants[0].username
+                        : activeChat.participants[1].username}
                     </h3>
                     <p className="text-xs text-green-400">Online</p>
                   </div>
@@ -168,12 +157,9 @@ export default function ChatPage() {
                 );
               })}
             </div>
-
             {/* Input */}
-            <form
-              onSubmit={sendMessage}
-              className="flex items-center gap-2 p-4 border-t border-gray-700 bg-[#151920]"
-            >
+            <form className="flex items-center gap-2 p-4 border-t border-gray-700 bg-[#151920]"
+            onSubmit={(e)=>e.preventDefault()}>
               <button type="button" className="text-gray-400 hover:text-white">
                 <Paperclip size={20} />
               </button>

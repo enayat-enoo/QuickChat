@@ -1,4 +1,4 @@
-const { tokenVerifier } = require("../utils/generateToken");
+const  {tokenVerifier}  = require("../utils/generateToken");
 
 async function isAuthMiddleware(req, res, next) {
   const token = req.cookies?.token;

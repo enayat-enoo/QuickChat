@@ -1,25 +1,31 @@
 const messageModel = require("../models/Message");
 const userModel = require("../models/User");
+const chatModel = require("../models/ChatModel");
 async function messageSocket(io) {
   io.on("connection", async (socket) => {
-    console.log(`Socket Id ${socket.id}`);
     const userId = socket.user.id;
+    console.log(`User ${userId} connected`);
+    socket.join(userId);
     try {
       await userModel.findByIdAndUpdate(userId, { isOnline: true });
       io.emit("userOnline", { userId });
     } catch (error) {
       console.log("Error while marking the user online", error);
     }
-    socket.join(userId);
-    socket.on("sendMessage", async ({ content, receiverId }) => {
-      const senderId = userId;
+    socket.on("sendMessage", async ({ chatId, content, receiverId }) => {
       try {
         const message = await messageModel.create({
-          sender: senderId,
+          sender: userId,
           receiver: receiverId,
-          content: content,
+          content : content,
+          chatId : chatId
         });
-        io.to(senderId).emit("getMessage", message);
+        await chatModel.findByIdAndUpdate(chatId, {
+          lastMessage: message._id,
+          updatedAt: Date.now(),
+        });
+        console.log(chatId, content, receiverId);
+        io.to(userId).emit("getMessage", message);
         io.to(receiverId).emit("getMessage", message);
       } catch (error) {
         console.log(error);
