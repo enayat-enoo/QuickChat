@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, } from "@reduxjs/toolkit";
 import axios from "axios";
 
 export const fetchChatList = createAsyncThunk(
@@ -26,16 +26,16 @@ const chatSlice = createSlice({
       state.activeChat = action.payload;
     },
     updateChatList: (state, action) => {
-      const  data  = action.payload;
-      const existingChat = state.chatList.find((chat) => chat._id === data.chatId);
-
+      const data = action.payload;
+      const existingChat = state.chatList.find(
+        (chat) => chat._id === data.chatId
+      );
       if (existingChat) {
-        existingChat.lastMessage = data.lastMessage;
-
-        state.chatList = [
-          existingChat,
-          ...state.chatList.filter((c) => c._id !== data.chatId),
-        ];
+        existingChat.lastMessage = {
+          ...existingChat.lastMessage,
+          content: data.content,
+          updatedAt: new Date().toISOString(),
+        };
       } else {
         state.chatList.unshift(data);
       }

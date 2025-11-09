@@ -16,7 +16,8 @@ import Sidebar from "../components/Sidebar";
 import ChatLoader from "../components/ChatLoader";
 import { AuthContext } from "../context/AuthContext";
 import { SocketContext } from "../context/SocketContext";
-
+import { updateChatList } from "../store/chatSlice";
+import { useDispatch } from "react-redux";
 
 export default function ChatPage() {
   const [message, setMessage] = useState("");
@@ -29,6 +30,8 @@ export default function ChatPage() {
   const navigate = useNavigate();
   const receiverId = activeChat.participants[1]._id;
   const chatId = useParams().id;
+  const dispatch = useDispatch();
+
   useEffect(() => {
     if (activeChat) {
       axios
@@ -48,13 +51,33 @@ export default function ChatPage() {
     }
   }, [activeChat]);
 
+  useEffect(() => {
+    socket.on("getMessage", (message) => {
+      setMessages((prevMessages) => [...prevMessages, message]);
+    });
+  }, [socket]);
+
   function messageSender() {
     if (!message.trim()) return;
     socket.emit("sendMessage", {
       chatId: chatId,
-      receiverId : receiverId,
+      receiverId: receiverId,
       content: message,
     });
+    setMessages((prev) => [
+      ...prev,
+      {
+        sender: {
+          _id: user._id,
+          username: user.username,
+          avatar: user.avatar,
+        },
+        receiver: receiverId,
+        content: message,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    dispatch(updateChatList({ chatId, content: message }));
     setMessage("");
   }
 
@@ -158,8 +181,10 @@ export default function ChatPage() {
               })}
             </div>
             {/* Input */}
-            <form className="flex items-center gap-2 p-4 border-t border-gray-700 bg-[#151920]"
-            onSubmit={(e)=>e.preventDefault()}>
+            <form
+              className="flex items-center gap-2 p-4 border-t border-gray-700 bg-[#151920]"
+              onSubmit={(e) => e.preventDefault()}
+            >
               <button type="button" className="text-gray-400 hover:text-white">
                 <Paperclip size={20} />
               </button>
