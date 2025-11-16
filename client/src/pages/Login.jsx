@@ -3,6 +3,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { useContext } from "react";
+import { toast } from "react-toastify";
 import  axios from "axios";
 
 export default function Login() {
@@ -11,6 +12,9 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const { setUser } = useContext(AuthContext);
+  const incorrectUserToast = () => {
+    toast("Wrong email or password");
+  }
 
   function loginHandler(e){
       e.preventDefault();
@@ -27,6 +31,9 @@ export default function Login() {
         console.log(res);
       })
       .catch((err)=>{
+        if(err.response.status === 401 || err.response.status === 404){
+          incorrectUserToast();
+        }
         console.log(err);
       })
   }

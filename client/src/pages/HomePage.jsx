@@ -95,8 +95,9 @@ export default function HomePage() {
               {/* If search results exist, show them */}
               {searchResults.length > 0 ? (
                 searchResults.map((user) => (
+                  console.log("user",searchResults),
                   <div
-                    key={user._id}
+                    key={user.data.id}
                     className="p-3 rounded-lg cursor-pointer hover:bg-[#2a2f3a]"
                     onClick={() => navigate(`/chat/${user.data.id}`)}
                   >
