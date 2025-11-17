@@ -32,6 +32,8 @@ export default function ChatPage() {
   const chatId = useParams().id;
   const dispatch = useDispatch();
 
+  console.log(activeChat);
+
   useEffect(() => {
     if (activeChat) {
       axios
@@ -49,7 +51,13 @@ export default function ChatPage() {
           console.log(err);
         });
     }
-  }, [activeChat]);
+    //Cleanup function to remove previous messages when switching chats
+    return () => {
+      setMessages([]);
+    };
+  
+  }, [activeChat, dispatch]);
+
 
   useEffect(() => {
     socket.on("getMessage", (message) => {

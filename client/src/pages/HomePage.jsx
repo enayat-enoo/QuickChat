@@ -11,6 +11,7 @@ import { fetchChatList } from "../store/chatSlice";
 import Bottom from "../components/Bottom";
 import { SocketContext } from "../context/SocketContext";
 import { updateChatList } from "../store/chatSlice";
+import { setActiveChat } from "../store/chatSlice";
 
 export default function HomePage() {
   const { user } = useContext(AuthContext);
@@ -24,8 +25,6 @@ export default function HomePage() {
   useEffect(() => {
     dispatch(fetchChatList());
   }, [dispatch]);
-
-
 
   useEffect(() => {
     if (!socket) return;
@@ -94,16 +93,20 @@ export default function HomePage() {
             <div className="space-y-3 overflow-y-auto max-h-[400px] pr-2">
               {/* If search results exist, show them */}
               {searchResults.length > 0 ? (
-                searchResults.map((user) => (
-                  console.log("user",searchResults),
+                searchResults.map((search) => (
+
                   <div
-                    key={user.data.id}
+                    key={search.data.id}
                     className="p-3 rounded-lg cursor-pointer hover:bg-[#2a2f3a]"
-                    onClick={() => navigate(`/chat/${user.data.id}`)}
+                    onClick={() => {
+                      dispatch(setActiveChat(search.data));
+                      navigate(`/chat/${search.data._id}`);
+                    }}
                   >
-                    <p className="font-medium">{user.data.name}</p>
+                    <p className="font-medium">{
+                      search.data.participants[1].username === user.username ? search.data.participants[0].name : search.data.participants[1].name}</p>
                     <p className="text-sm text-gray-400">
-                      @{user.data.username}
+                      @{search.data.participants[1].username === user.username ? search.data.participants[0].username : search.data.participants[1].username}
                     </p>
                   </div>
                 ))
