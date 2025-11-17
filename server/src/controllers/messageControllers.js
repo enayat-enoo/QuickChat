@@ -70,7 +70,7 @@ async function getChats(req, res) {
       .find({
         participants: { $in: [userId] },
       })
-      .populate("participants", "name username avatar isOnline")
+      .populate("participants", "name username avatar isOnline lastSeen")
       .populate("lastMessage", "content createdAt")
       .sort({ updateAt: -1 });
     return res

@@ -32,7 +32,8 @@ export default function ChatPage() {
   const chatId = useParams().id;
   const dispatch = useDispatch();
 
-  console.log(activeChat);
+  const otherParticipant = activeChat.participants[1].username === user.username ? activeChat.participants[0] : activeChat.participants[1];
+  let statusText = otherParticipant.isOnline ? "Online" : `Last seen at ${new Date(otherParticipant.lastSeen).toLocaleString()}`;
 
   useEffect(() => {
     if (activeChat) {
@@ -55,9 +56,7 @@ export default function ChatPage() {
     return () => {
       setMessages([]);
     };
-  
   }, [activeChat, dispatch]);
-
 
   useEffect(() => {
     socket.on("getMessage", (message) => {
@@ -145,11 +144,11 @@ export default function ChatPage() {
                   />
                   <div>
                     <h3 className="text-white font-semibold text-sm">
-                      {activeChat.participants[1].username === user.username
-                        ? activeChat.participants[0].username
-                        : activeChat.participants[1].username}
+                      {otherParticipant.name}
                     </h3>
-                    <p className="text-xs text-green-400">Online</p>
+                    <p className="text-xs text-green-400">
+                      {statusText}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-5 text-gray-300">
