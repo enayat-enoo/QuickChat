@@ -4,8 +4,9 @@ const {
   hashPassword,
   hashedPasswordVerifier,
 } = require("../utils/passwordHash");
+const uploadImage = require("../config/cloudinary")
 
-const saltRounds = process.env.SALT_ROUNDS || 10;
+const saltRounds = Number(process.env.SALT_ROUNDS || 10);
 
 //User Registration Handler Function
 async function userRegistration(req, res) {
@@ -20,6 +21,16 @@ async function userRegistration(req, res) {
     return res.status(409).json({ message: "user conflict" });
   }
   
+  //upload avatar to cloudinary if exists
+  if (req.file) {
+    try {
+      const result = await uploadImage(req.file.buffer);
+      req.body.avatar = result.url;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  //hash password
   const hashedPassword = await hashPassword(password, saltRounds);
 
   try {
@@ -28,6 +39,7 @@ async function userRegistration(req, res) {
       username,
       email,
       password: hashedPassword,
+      avatar: req.body.avatar || null,
     });
     return res
       .status(200)

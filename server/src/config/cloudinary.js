@@ -1,4 +1,6 @@
 const cloudinary = require("cloudinary").v2;
+const { Readable } = require("stream");
+require("dotenv").config();
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -7,20 +9,24 @@ cloudinary.config({
     secure: true
 })
 
-const uploadImage = async (imagePath)=>{
-    const options = {
-        use_filename : true,
-        unique_filename : false,
-        overwrite : true,
-        folder : "avatars",
-        allowed_formats : ["jpg", "png", "jpeg"]
-    };
-    try {
-        const result = await cloudinary.uploader.upload(imagePath,options);
-        return result.public_id;
-    } catch (error) {
-        console.log(error);
-    }
+const uploadImage = (fileBuffer)=>{
+    return new Promise((resolve, reject)=>{
+        const stream = cloudinary.uploader.upload_stream({
+            folder : "avatars",
+            allowed_formats: ["jpg", "png", "jpeg"],
+            overwrite: true,
+        }, (error, result) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(result);
+            }
+        });
+        const readableStream = new Readable();
+        readableStream.push(fileBuffer);
+        readableStream.push(null);
+        readableStream.pipe(stream);
+    })
 }
 
 module.exports = uploadImage;
