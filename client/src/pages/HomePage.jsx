@@ -51,6 +51,7 @@ export default function HomePage() {
     setUserSearch("");
   }
 
+
   return (
     <div className="min-h-screen bg-[#0d1117] flex items-center justify-center font-sans text-white">
       <div className="w-[1100px] h-[600px] bg-[#1a1f29] rounded-2xl overflow-hidden flex shadow-2xl">

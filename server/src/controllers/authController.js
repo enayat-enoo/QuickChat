@@ -19,7 +19,7 @@ async function userRegistration(req, res) {
   if (user) {
     return res.status(409).json({ message: "user conflict" });
   }
-
+  
   const hashedPassword = await hashPassword(password, saltRounds);
 
   try {
