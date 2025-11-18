@@ -107,7 +107,7 @@ export default function ChatPage() {
           <div>
             <div className="flex items-center space-x-3 mb-6">
               <img
-                src="https://via.placeholder.com/80x80/1e1e1e/ffffff?text=U"
+                src={user.avatar}
                 className="w-12 h-12 rounded-full border border-gray-400"
               />
               <div>
@@ -139,7 +139,7 @@ export default function ChatPage() {
               <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-700">
                 <div className="flex items-center gap-3">
                   <img
-                    src="https://via.placeholder.com/45x45/1e1e1e/ffffff?text=A"
+                    src={otherParticipant.avatar}
                     className="w-10 h-10 rounded-full border border-gray-500"
                   />
                   <div>

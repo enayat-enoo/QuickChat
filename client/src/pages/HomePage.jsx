@@ -51,6 +51,31 @@ export default function HomePage() {
     setUserSearch("");
   }
 
+  function avatarUpload() {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append("avatar", file);
+      axios
+        .post("http://localhost:8001/api/user/avatar", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        })
+        .then(() => {
+          window.location.reload();
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    };
+    fileInput.click();
+  }
+
 
   return (
     <div className="min-h-screen bg-[#0d1117] flex items-center justify-center font-sans text-white">
@@ -64,6 +89,7 @@ export default function HomePage() {
                 src={user.avatar}
                 alt="avatar"
                 className="w-14 h-14 rounded-full border-2 border-gray-500 object-cover"
+                onClick={avatarUpload}
               />
               <div>
                 <h2 className="font-semibold text-lg">{user.name}</h2>

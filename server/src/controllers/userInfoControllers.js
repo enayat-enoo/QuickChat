@@ -1,5 +1,6 @@
 const userModel = require("../models/User");
 const chatModel = require("../models/ChatModel");
+const uploadImage = require("../config/cloudinary");
 async function getUserInfo(req, res) {
   const userId = req.user.id;
   try {
@@ -69,8 +70,26 @@ async function getUserInfoByChatId(req, res) {
   }
 }
 
+async function uploadAvatar(req,res){
+  //upload avatar to cloudinary if exists
+  if(req.file){
+    try {
+      const result = await uploadImage(req.file.buffer);
+      //update user avatar in db
+      await userModel.findByIdAndUpdate(req.user.id,{
+        avatar : result.url
+      });
+      return  res.status(200).json({message : "Avatar uploaded successfully", avatarUrl : result.url});
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({message : "Internal Server Error"});
+    }
+  }
+}
+
 module.exports = {
   getUserInfo,
   getSearchedUserInfo,
   getUserInfoByChatId,
+  uploadAvatar,
 };
