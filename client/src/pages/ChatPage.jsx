@@ -88,6 +88,7 @@ export default function ChatPage() {
     setMessage("");
   }
 
+  
   function logoutHandler() {
     axios
       .get("http://localhost:8001/api/logout", { withCredentials: true })
