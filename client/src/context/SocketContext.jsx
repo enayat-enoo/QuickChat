@@ -17,7 +17,7 @@ export function SocketProvider({ children }) {
     });
 
     newSocket.on("connect", () => {
-      newSocket.emit("joinUserChats"); 
+      newSocket.emit("setup", user._id); 
     });
 
     setSocket(newSocket);

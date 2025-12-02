@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
@@ -24,13 +24,16 @@ export default function ChatPage() {
   const { socket } = useSocket();
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState([]);
+
+  const messageEndRef = useRef(null);
+
   const chatList = useSelector((state) => state.chat?.chatList ?? []);
   const activeChat = useSelector((state) => state.chat.activeChat);
   const navigate = useNavigate();
   const chatId = useParams().id;
   const dispatch = useDispatch();
 
-  const otherParticipant = activeChat.participants.find(
+  const otherParticipant = activeChat?.participants?.find(
     (p) => p.username !== user.username
   );
   let statusText = otherParticipant.isOnline
@@ -53,29 +56,34 @@ export default function ChatPage() {
         .catch((err) => {
           console.log(err);
         });
+    } else {
+      setMessages([]);
     }
     //Cleanup function to remove previous messages when switching chats
     return () => {
       setMessages([]);
     };
-  }, [activeChat, dispatch]);
+  }, [activeChat?._id]);
 
   useEffect(() => {
     if (!socket) return;
     const handleIncoming = (message) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
+      if (activeChat && message.chatId === activeChat._id) {
+        //only add message if it belongs to the active chat
+        setMessages((prevMessages) => [...prevMessages, message]);
+      }
     };
     socket.on("getMessage", handleIncoming);
     return () => {
       socket.off("getMessage", handleIncoming);
     };
-  }, [socket]);
+  }, [socket, activeChat]);
 
   function messageSender() {
     if (!message.trim()) return;
 
     // guard activeChat / receiverId
-    const receiver = activeChat?.participants?.find((p) => p._id !== user._id);
+    const receiver = activeChat?.participants?.find((p) => p.username !== user.username);
     const receiverIdSafe = receiver ? receiver._id : null;
     const currentChatId = chatId || activeChat?._id;
 
@@ -90,21 +98,21 @@ export default function ChatPage() {
       content: message,
     });
 
-    // optimistic UI update
-    setMessages((prev) => [
-      ...prev,
-      {
-        sender: {
-          _id: user._id,
-          username: user.username,
-          avatar: user.avatar,
-        },
-        receiver: receiverIdSafe,
-        content: message,
-        createdAt: new Date().toISOString(),
+    // Optimistic UI
+    const optimisticMsg = {
+      _id: Date.now().toString(), // Temp ID to prevent key errors
+      sender: {
+        _id: user._id,
+        username: user.username,
+        avatar: user.avatar,
       },
-    ]);
+      receiver: receiverIdSafe,
+      content: message,
+      createdAt: new Date().toISOString(),
+      chatId: currentChatId,
+    };
 
+    setMessages((prev) => [...prev, optimisticMsg]);
     dispatch(updateChatList({ chatId: currentChatId, content: message }));
     setMessage("");
   }
@@ -118,6 +126,16 @@ export default function ChatPage() {
       .catch((err) => {
         console.log(err);
       });
+  }
+
+  // Early return if no chat selected (prevents "cannot read properties of undefined")
+  if (!activeChat) {
+    return (
+      <div className="min-h-screen w-full bg-[#0d1117] flex items-center justify-center">
+        {/* You can keep Sidebar here if you want it visible on empty state */}
+        <div className="text-white">Select a chat to start messaging</div>
+      </div>
+    );
   }
 
   return (
@@ -185,7 +203,9 @@ export default function ChatPage() {
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.map((msg) => {
-                const isMine = msg.sender.username === user.username;
+                const isMine =
+                  msg.sender._id === user._id ||
+                  msg.sender.username === user.username;
 
                 return (
                   <div
@@ -206,6 +226,7 @@ export default function ChatPage() {
                   </div>
                 );
               })}
+              <div ref={messageEndRef} />
             </div>
             {/* Input */}
             <form

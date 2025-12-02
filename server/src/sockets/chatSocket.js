@@ -4,7 +4,6 @@ const chatModel = require("../models/ChatModel");
 async function messageSocket(io) {
   io.on("connection", async (socket) => {
     const userId = socket.user.id;
-    console.log(`User ${userId} connected`);
     socket.join(userId);
     try {
       await userModel.findByIdAndUpdate(userId, { isOnline: true });
@@ -14,12 +13,15 @@ async function messageSocket(io) {
     }
     socket.on("sendMessage", async ({ chatId, content, receiverId }) => {
       try {
-        const message = await messageModel.create({
+        let message = await messageModel.create({
           sender: userId,
           receiver: receiverId,
           content : content,
           chatId : chatId
         });
+
+        message = await message.populate("sender", "username avatar name");
+
         await chatModel.findByIdAndUpdate(chatId, {
           lastMessage: message._id,
           updatedAt: Date.now(),
