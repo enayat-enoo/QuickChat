@@ -1,22 +1,21 @@
 import { MessageSquare, UserSearch } from "lucide-react";
-import { useContext, useEffect } from "react";
 import axios from "axios";
-import { useState } from "react";
-import { AuthContext } from "../context/AuthContext";
+import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { searchUser } from "../store/userSlice";
 import { fetchChatList } from "../store/chatSlice";
 import Bottom from "../components/Bottom";
-import { SocketContext } from "../context/SocketContext";
+import { useSocket } from "../context/SocketContext";
 import { updateChatList } from "../store/chatSlice";
 import { setActiveChat } from "../store/chatSlice";
+import { useAuth } from "../context/AuthContext";
 
 export default function HomePage() {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [userSearch, setUserSearch] = useState("");
-  const { socket } = useContext(SocketContext);
+  const { socket } = useSocket();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { searchResults } = useSelector((state) => state.user);
@@ -121,7 +120,6 @@ export default function HomePage() {
               {/* If search results exist, show them */}
               {searchResults.length > 0 ? (
                 searchResults.map((search) => (
-
                   <div
                     key={search.data.id}
                     className="p-3 rounded-lg cursor-pointer hover:bg-[#2a2f3a]"
@@ -131,9 +129,9 @@ export default function HomePage() {
                     }}
                   >
                     <p className="font-medium">{
-                      search.data.participants[1].username === user.username ? search.data.participants[0].name : search.data.participants[1].name}</p>
+                      search.data.participants.find((p) => p.username !== user.username).name}</p>
                     <p className="text-sm text-gray-400">
-                      @{search.data.participants[1].username === user.username ? search.data.participants[0].username : search.data.participants[1].username}
+                      @{search.data.participants.find((p) => p.username !== user.username).username}
                     </p>
                   </div>
                 ))

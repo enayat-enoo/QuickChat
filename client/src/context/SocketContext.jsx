@@ -25,7 +25,7 @@ export function SocketProvider({ children }) {
     return () => {
       newSocket.disconnect();
     };
-  }, [user]);
+  }, [user?.token]);
 
   return (
     <SocketContext.Provider value={{ socket }}>
@@ -33,3 +33,7 @@ export function SocketProvider({ children }) {
     </SocketContext.Provider>
   );
 }
+
+export const useSocket = () => {
+  return useContext(SocketContext);
+};

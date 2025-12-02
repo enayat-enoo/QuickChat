@@ -14,7 +14,7 @@ export default function Sidebar(props) {
         if (c.lastMessage === null) return null;
         return (
           <div
-            key={c.id}
+            key={c._id}
             className={`p-3 rounded-lg cursor-pointer ${
               c.active ? "bg-[#161b22]" : "hover:bg-[#2a2f3a]"
             }`}

@@ -1,0 +1,88 @@
+import {
+  Mic, MicOff, Video, VideoOff, Phone,
+  MessageCircle, MoreVertical, Minimize2, Maximize2
+} from "lucide-react";
+import { useState } from "react";
+
+export default function InCallVideoUI() {
+  const [mini, setMini] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [cameraOff, setCameraOff] = useState(false);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+
+      {/* Main container */}
+      <div className="relative w-full h-full md:w-[1100px] md:h-[700px] bg-[#0b0e12] rounded-none md:rounded-2xl overflow-hidden shadow-2xl">
+
+        {/* Remote video placeholder */}
+        <div className="absolute inset-0 bg-[#0f1317] flex items-center justify-center">
+          <div className="text-white/60 text-3xl font-semibold">
+            Remote Video
+          </div>
+        </div>
+
+        {/* Top bar */}
+        <div className="absolute top-4 left-4 right-4 flex items-center justify-between px-4 md:px-6">
+          <div className="flex items-center gap-3 bg-black/40 backdrop-blur px-3 py-1 rounded-full border border-gray-700">
+            <div className="w-3 h-3 rounded-full bg-green-400"></div>
+            <div className="leading-none">
+              <p className="text-white text-sm font-semibold">Alice</p>
+              <p className="text-gray-300 text-xs">00:36</p>
+            </div>
+          </div>
+
+          <button className="bg-black/40 p-2 rounded-md text-gray-300 border border-gray-700 hover:text-white">
+            <MoreVertical size={16} />
+          </button>
+        </div>
+
+        {/* Local preview picture-in-picture */}
+        <div className={`absolute right-4 bottom-28 md:bottom-16 
+          ${mini ? "w-36 h-24" : "w-48 h-32"} 
+          bg-black/50 rounded-xl shadow-2xl border border-gray-700 overflow-hidden`}>
+          <div className="w-full h-full bg-[#1a1d21] text-gray-300 flex items-center justify-center">
+            Local Video
+          </div>
+          <button 
+            onClick={() => setMini(!mini)}
+            className="absolute top-1 left-1 bg-black/40 rounded-full p-1 text-gray-200 hover:text-white">
+            {mini ? <Maximize2 size={14}/> : <Minimize2 size={14}/>}
+          </button>
+        </div>
+
+        {/* Bottom control bar */}
+        <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center">
+          <div className="bg-black/40 backdrop-blur-md border border-gray-700 px-4 py-3 rounded-full flex items-center gap-4">
+
+            <button onClick={() => setMuted(!muted)}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition 
+              ${muted ? "bg-gray-600 text-white" : "bg-white text-black"}`}>
+              {muted ? <MicOff size={18}/> : <Mic size={18}/>}
+            </button>
+
+            <button onClick={() => setCameraOff(!cameraOff)}
+              className={`w-12 h-12 rounded-full flex items-center justify-center transition 
+              ${cameraOff ? "bg-gray-600 text-white" : "bg-white text-black"}`}>
+              {cameraOff ? <VideoOff size={18}/> : <Video size={18}/>}
+            </button>
+
+            <button className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center">
+              {/* <ArrowRepeat size={18}/> */}
+            </button>
+
+            <button className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center">
+              <MessageCircle size={18}/>
+            </button>
+
+            <button className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center text-white shadow-xl">
+              <Phone size={20}/>
+            </button>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  );
+}

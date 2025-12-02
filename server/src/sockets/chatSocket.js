@@ -24,7 +24,7 @@ async function messageSocket(io) {
           lastMessage: message._id,
           updatedAt: Date.now(),
         });
-        io.to(receiverId).emit("getMessage", message);
+        socket.to(receiverId).emit("getMessage", message);
       } catch (error) {
         console.log(error);
       }
