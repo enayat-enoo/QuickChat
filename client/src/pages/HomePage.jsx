@@ -8,7 +8,7 @@ import { searchUser } from "../store/userSlice";
 import { fetchChatList } from "../store/chatSlice";
 import Bottom from "../components/Bottom";
 import { useSocket } from "../context/SocketContext";
-import { updateChatList,updateOnlineStatus } from "../store/chatSlice";
+import { updateChatList,updateOnlineStatus,updateOfflineStatus } from "../store/chatSlice";
 import { setActiveChat } from "../store/chatSlice";
 import { useAuth } from "../context/AuthContext";
 
@@ -21,10 +21,12 @@ export default function HomePage() {
   const { searchResults } = useSelector((state) => state.user);
   const chatList = useSelector((state) => state.chat?.chatList ?? []);
 
+  // fetch chat list on component mount
   useEffect(() => {
     dispatch(fetchChatList());
   }, [dispatch]);
 
+  // listen for incoming messages
   useEffect(() => {
     if (!socket) return;
     socket.on("getMessage", (message) => {
@@ -33,12 +35,21 @@ export default function HomePage() {
     return ()=>socket.off("newMessage");
   }, [socket, dispatch]);
 
+  // update online status
   useEffect(()=>{
     socket?.on("userOnline",({userId})=>{
       dispatch(updateOnlineStatus(userId));
     })
   },[chatList, socket,dispatch])
+
+  // update offline status
+  useEffect(()=>{
+    socket?.on("userOffline",(data)=>{
+      dispatch(updateOfflineStatus(data));
+    })
+  },[socket,dispatch])
   
+  // logout handler
   function logoutHandler() {
     axios
       .get("http://localhost:8001/api/logout", { withCredentials: true })
@@ -50,12 +61,14 @@ export default function HomePage() {
       });
   }
 
+  // Handler to search for a user
   function userSearchHandler() {
     if (!userSearch.trim()) return;
     dispatch(searchUser(userSearch));
     setUserSearch("");
   }
 
+  // Handler to upload avatar
   function avatarUpload() {
     const fileInput = document.createElement("input");
     fileInput.type = "file";

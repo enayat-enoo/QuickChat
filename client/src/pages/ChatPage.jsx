@@ -15,7 +15,11 @@ import Bottom from "../components/Bottom";
 import Sidebar from "../components/Sidebar";
 import ChatLoader from "../components/ChatLoader";
 import { useAuth } from "../context/AuthContext";
-import { updateChatList } from "../store/chatSlice";
+import {
+  updateChatList,
+  updateOnlineStatus,
+  updateOfflineStatus,
+} from "../store/chatSlice";
 import { useDispatch } from "react-redux";
 import { useSocket } from "../context/SocketContext";
 export default function ChatPage() {
@@ -37,12 +41,15 @@ export default function ChatPage() {
     (p) => p.username !== user.username
   );
 
-  let statusText = otherParticipant.isOnline
-    ? "Online"
-    : `Last seen at ${new Date(otherParticipant.lastSeen).toLocaleString()}`;
-    if(statusText.includes("Invalid Date")){
+  let statusText = "";
+  if (otherParticipant) {
+    statusText = otherParticipant.isOnline
+      ? "Online"
+      : `Last seen at ${new Date(otherParticipant.lastSeen).toLocaleString()}`;
+    if (statusText.includes("Invalid Date")) {
       statusText = "";
     }
+  }
 
   useEffect(() => {
     if (activeChat) {
@@ -82,6 +89,26 @@ export default function ChatPage() {
       socket.off("getMessage", handleIncoming);
     };
   }, [socket, activeChat]);
+
+  // update online status
+  useEffect(() => {
+    if (!socket) return;
+    const userOnlineHandler = (userId) => {
+      dispatch(updateOnlineStatus(userId));
+    };
+    socket?.on("userOnline", userOnlineHandler);
+    return () => socket.off("userOnline", userOnlineHandler);
+  }, [socket, dispatch]);
+
+  // update offline status
+  useEffect(() => {
+    if (!socket) return;
+    const userOfflineHandler = (data) => {
+      dispatch(updateOfflineStatus(data));
+    };
+    socket?.on("userOffline", userOfflineHandler);
+    return () => socket.off("userOffline", userOfflineHandler);
+  }, [socket, dispatch]);
 
   function messageSender() {
     if (!message.trim()) return;

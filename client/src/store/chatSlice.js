@@ -1,6 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+import { act } from "react";
 
+//API call to fetch chat list
 export const fetchChatList = createAsyncThunk(
   "chat/fetchChatList",
   async () => {
@@ -14,6 +16,8 @@ export const fetchChatList = createAsyncThunk(
   }
 );
 
+
+// Redux slice for chat state management to store chat list and active chat
 const chatSlice = createSlice({
   name: "chat",
   initialState: {
@@ -21,10 +25,16 @@ const chatSlice = createSlice({
     status: "idle",
     activeChat: null,
   },
+
+  // Reducers for chat state management
   reducers: {
+
+    //It keeps track of the user which is currently being chatted
     setActiveChat: (state, action) => {
       state.activeChat = action.payload;
     },
+
+    //It updates the chat list when a new message is received
     updateChatList: (state, action) => {
       const data = action.payload;
       const existingChat = state.chatList.find(
@@ -40,18 +50,28 @@ const chatSlice = createSlice({
         state.chatList.unshift(data);
       }
     },
+
+    //It updates the online status of the users in the chat list
     updateOnlineStatus : (state,action)=>{
-      const data = action.payload;
-      const targetChat = state.chatList.find(chat => chat.participants.some(participant => participant._id === data));
-      if(targetChat){
-        const updateUser = targetChat.participants.find(participant => participant._id === data);
-        if(updateUser){
-          updateUser.isOnline = true;
-        }
+      const userId = action.payload;
+      state.chatList.forEach(chat => chat.participants.forEach(participant=> participant._id === userId && (participant.isOnline = true)));
+      if(state.activeChat){
+        state.activeChat.participants.forEach(participant=> participant._id === userId && (participant.isOnline = true));
       }
-    }
+    },
+
+    //It updates the offline status of the users in the chat list
+    updateOfflineStatus : (state,action)=>{
+      const {userId, lastSeen} = action.payload;
+      state.chatList.forEach(chat => chat.participants.forEach(participant=> participant._id === userId && (participant.isOnline = false,participant.lastSeen = lastSeen)));
+      if(state.activeChat){
+        state.activeChat.participants.forEach(participant=> participant._id === userId && (participant.isOnline = false,participant.lastSeen = lastSeen));
+      }
+    },
   },
 
+
+  // Extra reducers for chat state management
   extraReducers: (builder) => {
     builder
       .addCase(fetchChatList.pending, (state) => {
@@ -67,5 +87,5 @@ const chatSlice = createSlice({
   },
 });
 
-export const { setActiveChat, updateChatList,updateOnlineStatus } = chatSlice.actions;
+export const { setActiveChat, updateChatList,updateOnlineStatus,updateOfflineStatus } = chatSlice.actions;
 export default chatSlice.reducer;

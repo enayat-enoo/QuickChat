@@ -40,11 +40,11 @@ async function messageSocket(io) {
           const stillConnected = sockets.some((s) => s.user.id === userId);
 
           if (!stillConnected) {
-            await userModel.findByIdAndUpdate(userId, {
+            const userLastSeen = await userModel.findByIdAndUpdate(userId, {
               isOnline: false,
               lastSeen: new Date(),
-            });
-            io.emit("userOffline", { userId });
+            },{new:true});
+            io.emit("userOffline", { userId:userId,lastSeen:userLastSeen.lastSeen });
           }
         }, 3000);
       } catch (error) {
