@@ -8,7 +8,7 @@ import { searchUser } from "../store/userSlice";
 import { fetchChatList } from "../store/chatSlice";
 import Bottom from "../components/Bottom";
 import { useSocket } from "../context/SocketContext";
-import { updateChatList } from "../store/chatSlice";
+import { updateChatList,updateOnlineStatus } from "../store/chatSlice";
 import { setActiveChat } from "../store/chatSlice";
 import { useAuth } from "../context/AuthContext";
 
@@ -33,6 +33,12 @@ export default function HomePage() {
     return ()=>socket.off("newMessage");
   }, [socket, dispatch]);
 
+  useEffect(()=>{
+    socket?.on("userOnline",({userId})=>{
+      dispatch(updateOnlineStatus(userId));
+    })
+  },[chatList, socket,dispatch])
+  
   function logoutHandler() {
     axios
       .get("http://localhost:8001/api/logout", { withCredentials: true })

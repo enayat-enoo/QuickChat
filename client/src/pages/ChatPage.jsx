@@ -36,9 +36,13 @@ export default function ChatPage() {
   const otherParticipant = activeChat?.participants?.find(
     (p) => p.username !== user.username
   );
+
   let statusText = otherParticipant.isOnline
     ? "Online"
     : `Last seen at ${new Date(otherParticipant.lastSeen).toLocaleString()}`;
+    if(statusText.includes("Invalid Date")){
+      statusText = "";
+    }
 
   useEffect(() => {
     if (activeChat) {
@@ -83,7 +87,9 @@ export default function ChatPage() {
     if (!message.trim()) return;
 
     // guard activeChat / receiverId
-    const receiver = activeChat?.participants?.find((p) => p.username !== user.username);
+    const receiver = activeChat?.participants?.find(
+      (p) => p.username !== user.username
+    );
     const receiverIdSafe = receiver ? receiver._id : null;
     const currentChatId = chatId || activeChat?._id;
 
@@ -173,34 +179,31 @@ export default function ChatPage() {
           <ChatLoader />
         ) : (
           <div className="flex-1 flex flex-col bg-[#161b22]">
-            <div className="flex-1 flex flex-col bg-[#161b22]">
-              {/* Top bar */}
-              <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-700">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={otherParticipant.avatar}
-                    className="w-10 h-10 rounded-full border border-gray-500"
-                  />
-                  <div>
-                    <h3 className="text-white font-semibold text-sm">
-                      {otherParticipant.name}
-                    </h3>
-                    <p className="text-xs text-green-400">{statusText}</p>
-                  </div>
+            {/* Top bar – no flex-1 here */}
+            <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-700">
+              <div className="flex items-center gap-3">
+                <img
+                  src={otherParticipant.avatar}
+                  className="w-10 h-10 rounded-full border border-gray-500"
+                />
+                <div>
+                  <h3 className="text-white font-semibold text-sm">
+                    {otherParticipant.name}
+                  </h3>
+                  <p className="text-xs text-green-400">{statusText}</p>
                 </div>
-                <div className="flex items-center gap-5 text-gray-300">
-                  <button className="hover:text-white">
-                    <Phone size={20} />
-                  </button>
-                  <button className="hover:text-white">
-                    <Video size={25} />
-                  </button>
-                </div>
+              </div>
+              <div className="flex items-center gap-5 text-gray-300">
+                <button className="hover:text-white">
+                  <Phone size={20} />
+                </button>
+                <button className="hover:text-white">
+                  <Video size={25} />
+                </button>
               </div>
             </div>
 
-            {/* Messages */}
-
+            {/* Messages – this gets all remaining height */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.map((msg) => {
                 const isMine =
@@ -228,6 +231,7 @@ export default function ChatPage() {
               })}
               <div ref={messageEndRef} />
             </div>
+
             {/* Input */}
             <form
               className="flex items-center gap-2 p-4 border-t border-gray-700 bg-[#151920]"

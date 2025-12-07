@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice, } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
 export const fetchChatList = createAsyncThunk(
@@ -40,6 +40,16 @@ const chatSlice = createSlice({
         state.chatList.unshift(data);
       }
     },
+    updateOnlineStatus : (state,action)=>{
+      const data = action.payload;
+      const targetChat = state.chatList.find(chat => chat.participants.some(participant => participant._id === data));
+      if(targetChat){
+        const updateUser = targetChat.participants.find(participant => participant._id === data);
+        if(updateUser){
+          updateUser.isOnline = true;
+        }
+      }
+    }
   },
 
   extraReducers: (builder) => {
@@ -57,5 +67,5 @@ const chatSlice = createSlice({
   },
 });
 
-export const { setActiveChat, updateChatList } = chatSlice.actions;
+export const { setActiveChat, updateChatList,updateOnlineStatus } = chatSlice.actions;
 export default chatSlice.reducer;

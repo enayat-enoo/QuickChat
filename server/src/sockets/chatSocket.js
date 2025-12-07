@@ -6,7 +6,7 @@ async function messageSocket(io) {
     const userId = socket.user.id;
     socket.join(userId);
     try {
-      await userModel.findByIdAndUpdate(userId, { isOnline: true });
+      await userModel.findByIdAndUpdate(userId, { isOnline: true },{new:true});
       io.emit("userOnline", { userId });
     } catch (error) {
       console.log("Error while marking the user online", error);
