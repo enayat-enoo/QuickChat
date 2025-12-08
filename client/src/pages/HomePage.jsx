@@ -54,6 +54,7 @@ export default function HomePage() {
     axios
       .get("http://localhost:8001/api/logout", { withCredentials: true })
       .then(() => {
+        socket?.disconnect(); 
         window.location.reload();
       })
       .catch((err) => {

@@ -1,6 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import { act } from "react";
 
 //API call to fetch chat list
 export const fetchChatList = createAsyncThunk(

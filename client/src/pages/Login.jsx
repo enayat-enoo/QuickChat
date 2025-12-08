@@ -5,6 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 import { useContext } from "react";
 import { toast } from "react-toastify";
 import  axios from "axios";
+import { useSocket } from "../context/SocketContext";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,6 +13,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const { setUser } = useContext(AuthContext);
+  const { socket } = useSocket();
   const incorrectUserToast = () => {
     toast("Wrong email or password");
   }
@@ -27,8 +29,8 @@ export default function Login() {
       },{withCredentials: true})
       .then((res)=>{
         setUser(res.data.user);
+        socket?.connect();
         navigate('/');
-        console.log(res);
       })
       .catch((err)=>{
         if(err.response.status === 401 || err.response.status === 404){

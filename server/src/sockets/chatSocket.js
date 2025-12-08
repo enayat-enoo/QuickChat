@@ -3,7 +3,7 @@ const userModel = require("../models/User");
 const chatModel = require("../models/ChatModel");
 async function messageSocket(io) {
   io.on("connection", async (socket) => {
-    const userId = socket.user.id;
+    let userId = socket.user.id;
     socket.join(userId);
     try {
       await userModel.findByIdAndUpdate(userId, { isOnline: true },{new:true});
