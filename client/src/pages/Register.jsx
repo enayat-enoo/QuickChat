@@ -15,6 +15,9 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
 
+
+  const API = import.meta.env.VITE_API_URL;
+
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -44,7 +47,7 @@ export default function Register() {
     }
     //API call
     axios
-      .post("http://localhost:8001/api/register", formData,{
+      .post(`${API}/api/register`, formData,{
         headers: {
           "Content-Type": "multipart/form-data",
         },

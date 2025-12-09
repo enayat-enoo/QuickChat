@@ -21,6 +21,8 @@ import {
 } from "../store/chatSlice";
 import { useDispatch } from "react-redux";
 import { useSocket } from "../context/SocketContext";
+
+const API = import.meta.env.VITE_API_URL;
 export default function ChatPage() {
   const [message, setMessage] = useState("");
   const { user } = useAuth();
@@ -54,7 +56,7 @@ export default function ChatPage() {
     if (activeChat) {
       axios
         .get(
-          `http://localhost:8001/api/message/getmessage?chatId=${activeChat._id}`,
+          `${API}/api/message/getmessage?chatId=${activeChat._id}`,
           {
             withCredentials: true,
           }
@@ -151,7 +153,7 @@ export default function ChatPage() {
 
   function logoutHandler() {
     axios
-      .get("http://localhost:8001/api/logout", { withCredentials: true })
+      .get(`${API}/api/logout`, { withCredentials: true })
       .then(() => {
         navigate("/login");
       })

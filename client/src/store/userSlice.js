@@ -1,8 +1,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+
+const API = import.meta.env.VITE_API_URL;
+
 export const searchUser = createAsyncThunk("user/search", async (username) => {
   const { data } = await axios.get(
-    `http://localhost:8001/api/user/search?username=${username}`,
+    `${API}/api/user/search?username=${username}`,
     {
       withCredentials: true,
     }

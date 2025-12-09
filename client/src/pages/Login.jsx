@@ -7,6 +7,8 @@ import { toast } from "react-toastify";
 import  axios from "axios";
 import { useSocket } from "../context/SocketContext";
 
+const API = import.meta.env.VITE_API_URL;
+
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -23,7 +25,7 @@ export default function Login() {
       if(!email || !password){
         return alert("All fields are required");
       }
-      axios.post('http://localhost:8001/api/login',{
+      axios.post(`${API}/api/login`,{
         email,
         password,
       },{withCredentials: true})

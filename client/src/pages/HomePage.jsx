@@ -12,6 +12,8 @@ import { updateChatList,updateOnlineStatus,updateOfflineStatus } from "../store/
 import { setActiveChat } from "../store/chatSlice";
 import { useAuth } from "../context/AuthContext";
 
+const API = import.meta.env.VITE_API_URL;
+
 export default function HomePage() {
   const { user } = useAuth();
   const [userSearch, setUserSearch] = useState("");
@@ -52,7 +54,7 @@ export default function HomePage() {
   // logout handler
   function logoutHandler() {
     axios
-      .get("http://localhost:8001/api/logout", { withCredentials: true })
+      .get(`${API}/api/logout`, { withCredentials: true })
       .then(() => {
         socket?.disconnect(); 
         window.location.reload();
@@ -79,7 +81,7 @@ export default function HomePage() {
       const formData = new FormData();
       formData.append("avatar", file);
       axios
-        .post("http://localhost:8001/api/user/avatar", formData, {
+        .post(`${API}/api/user/avatar`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },

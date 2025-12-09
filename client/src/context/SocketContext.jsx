@@ -4,14 +4,14 @@ import { useContext } from "react";
 import { AuthContext } from "./AuthContext";
 
 export const SocketContext = createContext();
-
+const API = import.meta.env.VITE_API_URL;
 export function SocketProvider({ children }) {
   const { user } = useContext(AuthContext);
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
     if (!user) return;
-    const newSocket = io("http://localhost:8001", {
+    const newSocket = io(API, {
       withCredentials: true,
       auth: { token: user?.token },
     });

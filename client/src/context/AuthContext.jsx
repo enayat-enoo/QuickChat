@@ -2,7 +2,7 @@ import { createContext, useState, useEffect,useContext } from "react";
 import axios from "axios";
 
 export const AuthContext = createContext();
-
+const API = import.meta.env.VITE_API_URL;
 export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +21,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     axios
-      .get("http://localhost:8001/api/user", { withCredentials: true })
+      .get(`${API}/api/user`, { withCredentials: true })
       .then((res) => {
         setUser(res.data.data);
         setLoading(false);

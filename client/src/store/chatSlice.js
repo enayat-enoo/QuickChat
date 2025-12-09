@@ -1,12 +1,14 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
+const API = import.meta.env.VITE_API_URL;
+
 //API call to fetch chat list
 export const fetchChatList = createAsyncThunk(
   "chat/fetchChatList",
   async () => {
     const { data } = await axios.get(
-      "http://localhost:8001/api/message/getchats",
+      `${API}/api/message/getchats`,
       {
         withCredentials: true,
       }
