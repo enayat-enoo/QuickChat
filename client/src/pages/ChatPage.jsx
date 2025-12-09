@@ -3,7 +3,6 @@ import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import {
-  UserPlus,
   Send,
   Smile,
   Paperclip,
@@ -190,9 +189,6 @@ export default function ChatPage() {
 
             <div className="flex justify-between items-center mb-2">
               <p className="text-gray-200 text-sm font-semibold">Chats</p>
-              <button className="text-xs px-2 py-1 bg-white text-black rounded flex items-center gap-1 hover:bg-gray-200">
-                <UserPlus size={14} /> Add
-              </button>
             </div>
 
             <Sidebar contacts={chatList} />

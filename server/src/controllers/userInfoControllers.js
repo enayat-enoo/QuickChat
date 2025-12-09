@@ -36,7 +36,7 @@ async function getSearchedUserInfo(req, res) {
       .findOne({
         participants: { $all: [req.user.id, userInformation._id] },
       })
-      .populate("participants", "name username avatar");
+      .populate("participants", "name username avatar isOnline lastSeen");
     if (!userData) {
       userData = await chatModel.create({
         participants: [req.user.id, userInformation._id],
@@ -48,7 +48,7 @@ async function getSearchedUserInfo(req, res) {
       });
       userData = await userData.populate(
         "participants",
-        "name username avatar"
+        "name username avatar isOnline lastSeen"
       );
     }
     return res.status(200).json({ message: "user found", data: userData });
