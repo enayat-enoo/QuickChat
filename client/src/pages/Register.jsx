@@ -15,7 +15,6 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
 
-
   const API = import.meta.env.VITE_API_URL;
 
   const handleAvatarChange = (e) => {
@@ -47,7 +46,7 @@ export default function Register() {
     }
     //API call
     axios
-      .post(`${API}/api/register`, formData,{
+      .post(`${API}/api/register`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -63,26 +62,33 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0d1117] flex items-center justify-center font-sans">
-      <div className="flex w-[900px] h-[550px] bg-[#1a1f29] rounded-2xl overflow-hidden shadow-xl">
-        <div className="w-[40%] bg-[#3c2a55] text-white flex flex-col justify-center items-center p-10">
+    <div className="min-h-screen bg-[#0d1117] flex items-center justify-center font-sans px-4 md:px-0">
+      <div className="flex flex-col md:flex-row w-full md:w-[900px] md:h-[550px] bg-[#1a1f29] rounded-2xl overflow-hidden shadow-xl">
+        {/* LEFT PANEL */}
+        <div className="w-full md:w-[40%] bg-[#3c2a55] text-white flex flex-col justify-center items-center p-8 md:p-10">
           <div className="text-2xl font-bold mb-8">QuickChat</div>
-          <h2 className="text-2xl font-semibold mb-3">
+          <h2 className="text-2xl font-semibold mb-3 text-center">
             New User Registration.
           </h2>
           <div className="text-gray-300 text-sm mb-8">
-            <span className="opacity-70" onClick={() => navigate("/login")}>
-              LOG IN{" "}
+            <span
+              className="opacity-70 cursor-pointer"
+              onClick={() => navigate("/login")}
+            >
+              LOG IN
             </span>
             <span className="underline ml-2 font-medium">SIGN UP</span>
           </div>
-          <p className="text-xs text-gray-400 text-center mt-auto">
+          <p className="text-[10px] md:text-xs text-gray-400 text-center mt-auto">
             TERMS OF USE AND CONDITIONS
           </p>
         </div>
 
-        <div className="w-[60%] bg-[#161b22] flex flex-col items-center justify-center relative px-10">
-          <h2 className="text-white text-2xl font-semibold mb-6">SIGN UP</h2>
+        {/* RIGHT PANEL */}
+        <div className="w-full md:w-[60%] bg-[#161b22] flex flex-col items-center justify-center relative px-6 py-8 md:px-10 md:py-0">
+          <h2 className="text-white text-xl md:text-2xl font-semibold mb-6">
+            SIGN UP
+          </h2>
 
           <div className="relative mb-6">
             <label htmlFor="avatar-upload">
@@ -108,7 +114,7 @@ export default function Register() {
           </div>
 
           <form
-            className="grid grid-cols-2 gap-4 w-full max-w-md"
+            className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-md"
             onSubmit={registerHandler}
           >
             <input
@@ -118,6 +124,7 @@ export default function Register() {
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
+
             <input
               type="text"
               placeholder="Username"
@@ -125,10 +132,11 @@ export default function Register() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
+
             <input
               type="email"
               placeholder="Email"
-              className="col-span-2 bg-[#20262e] text-gray-200 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="md:col-span-2 bg-[#20262e] text-gray-200 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -167,7 +175,7 @@ export default function Register() {
               </button>
             </div>
 
-            <div className="col-span-2 flex justify-center mt-4">
+            <div className="col-span-1 md:col-span-2 flex justify-center mt-4">
               <button
                 type="submit"
                 className="bg-white text-black font-bold px-5 py-2 rounded-md hover:bg-gray-200 transition flex items-center justify-center"
