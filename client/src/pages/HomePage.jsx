@@ -103,11 +103,12 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#0d1117] font-sans text-white flex md:items-center md:justify-center">
-      <div className="w-full h-screen md:w-[1100px] md:h-[600px] bg-[#1a1f29] rounded-none md:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-none md:shadow-2xl">
-        {/* Sidebar */}
-        <div className="w-full md:w-[30%] bg-[#3c2a55] flex flex-col justify-between p-4 md:p-6">
-          {/* Top - User Info */}
-          <div>
+      <div className="w-full h-screen md:w-[1100px] md:h-[600px] bg-[#1a1f29] flex flex-col md:flex-row rounded-none md:rounded-2xl overflow-hidden shadow-none md:shadow-2xl">
+        {/* LEFT: Chat list (full screen on mobile) */}
+        <div className="w-full md:w-[30%] bg-[#3c2a55] flex flex-col h-full">
+          {/* Top + chat list */}
+          <div className="p-4 md:p-6 flex flex-col h-full">
+            {/* User info */}
             <div className="flex items-center space-x-4 mb-6 md:mb-8">
               <img
                 src={user.avatar}
@@ -125,8 +126,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Contacts Header */}
-            <div className="flex justify-between items-center mb-3 gap-2">
+            {/* Chats header + search */}
+            <div className="flex justify-between items-center gap-2 mb-3">
               <h3 className="text-gray-300 text-xs md:text-sm font-semibold">
                 Chats
               </h3>
@@ -146,8 +147,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Contacts List */}
-            <div className="space-y-3 overflow-y-auto max-h-[260px] md:max-h-[400px] pr-1 md:pr-2">
+            {/* Chats list – takes remaining height, scrollable */}
+            <div className="flex-1 space-y-3 overflow-y-auto pr-1 md:pr-2">
               {searchResults.length > 0 ? (
                 searchResults.map((search) => (
                   <div
@@ -181,17 +182,17 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Bottom - Settings/Logout */}
-          <Bottom props={{ logoutHandler }} />
+          {/* Bottom – sticks to bottom like WhatsApp (settings + logout) */}
+          <div className="border-t border-[#4a3468]">
+            <Bottom props={{ logoutHandler }} />
+          </div>
         </div>
 
-        {/* Chat Area */}
-        <div className="w-full md:w-[70%] bg-[#161b22] p-6 md:p-10 flex flex-col justify-center items-center relative">
-          <MessageSquare className="text-gray-600 w-16 h-16 md:w-20 md:h-20 mb-4 md:mb-6" />
-          <h2 className="text-xl md:text-2xl font-semibold">
-            Welcome to QuicKChat
-          </h2>
-          <p className="text-gray-400 text-xs md:text-sm mt-2 text-center px-4 md:px-0">
+        {/* RIGHT: Welcome panel – desktop only */}
+        <div className="hidden md:flex md:w-[70%] bg-[#161b22] p-10 flex-col justify-center items-center relative">
+          <MessageSquare className="text-gray-600 w-20 h-20 mb-6" />
+          <h2 className="text-2xl font-semibold">Welcome to QuicKChat</h2>
+          <p className="text-gray-400 text-sm mt-2 text-center">
             Select a chat from the left or start a new conversation.
           </p>
         </div>

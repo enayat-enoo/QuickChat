@@ -76,8 +76,10 @@ async function login(req, res) {
     return res
       .cookie("token", token, {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",
+        // secure: false,
+        secure: true,
+        // sameSite: "lax",
+        sameSite: "none",
         maxAge: 24 * 60 * 60 * 1000,
       })
       .status(201)
@@ -100,8 +102,10 @@ async function logout(req, res) {
   return res
     .clearCookie("token", {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      // secure: false,
+      secure: true,
+      // sameSite: "lax",
+      sameSite: "none",
     })
     .status(200)
     .json({ message: "logout successful" });
