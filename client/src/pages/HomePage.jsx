@@ -102,8 +102,8 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0d1117] flex items-center justify-center font-sans text-white px-4 md:px-0">
-      <div className="w-full md:w-[1100px] md:h-[600px] bg-[#1a1f29] rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
+    <div className="min-h-screen bg-[#0d1117] font-sans text-white flex md:items-center md:justify-center">
+      <div className="w-full h-screen md:w-[1100px] md:h-[600px] bg-[#1a1f29] rounded-none md:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-none md:shadow-2xl">
         {/* Sidebar */}
         <div className="w-full md:w-[30%] bg-[#3c2a55] flex flex-col justify-between p-4 md:p-6">
           {/* Top - User Info */}
