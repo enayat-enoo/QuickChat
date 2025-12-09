@@ -2,14 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import {
-  Send,
-  Smile,
-  Paperclip,
-  Mic,
-  Phone,
-  Video,
-} from "lucide-react";
+import { Send, Smile, Paperclip, Mic, Phone, Video } from "lucide-react";
 import Bottom from "../components/Bottom";
 import Sidebar from "../components/Sidebar";
 import ChatLoader from "../components/ChatLoader";
@@ -55,12 +48,9 @@ export default function ChatPage() {
   useEffect(() => {
     if (activeChat) {
       axios
-        .get(
-          `${API}/api/message/getmessage?chatId=${activeChat._id}`,
-          {
-            withCredentials: true,
-          }
-        )
+        .get(`${API}/api/message/getmessage?chatId=${activeChat._id}`, {
+          withCredentials: true,
+        })
         .then((res) => {
           setLoading(false);
           setMessages(res.data.data);
@@ -173,15 +163,15 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#0d1117] flex items-center justify-center font-sans">
-      <div className="w-full h-screen bg-[#1a1f29] flex rounded-none md:rounded-2xl overflow-hidden shadow-xl">
+    <div className="min-h-screen w-full bg-[#0d1117] flex items-center justify-center font-sans px-2 md:px-0">
+      <div className="w-full md:w-[1100px] h-screen md:h-[600px] bg-[#1a1f29] flex rounded-none md:rounded-2xl overflow-hidden shadow-xl">
         {/* Sidebar */}
         <div className="hidden md:flex w-[28%] bg-[#3c2a55] flex-col justify-between p-4">
           <div>
             <div className="flex items-center space-x-3 mb-6">
               <img
                 src={user.avatar}
-                className="w-12 h-12 rounded-full border border-gray-400"
+                className="w-12 h-12 rounded-full border border-gray-400 object-cover"
               />
               <div>
                 <h2 className="text-white font-semibold">{user.name}</h2>
@@ -204,32 +194,32 @@ export default function ChatPage() {
           <ChatLoader />
         ) : (
           <div className="flex-1 flex flex-col bg-[#161b22]">
-            {/* Top bar – no flex-1 here */}
-            <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-gray-700">
+            {/* Top bar */}
+            <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3 md:py-4 border-b border-gray-700">
               <div className="flex items-center gap-3">
                 <img
                   src={otherParticipant.avatar}
-                  className="w-10 h-10 rounded-full border border-gray-500"
+                  className="w-9 h-9 md:w-10 md:h-10 rounded-full border border-gray-500 object-cover"
                 />
                 <div>
-                  <h3 className="text-white font-semibold text-sm">
+                  <h3 className="text-white font-semibold text-sm md:text-base">
                     {otherParticipant.name}
                   </h3>
                   <p className="text-xs text-green-400">{statusText}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-5 text-gray-300">
+              <div className="flex items-center gap-4 md:gap-5 text-gray-300">
                 <button className="hover:text-white">
-                  <Phone size={20} />
+                  <Phone size={18} />
                 </button>
                 <button className="hover:text-white">
-                  <Video size={25} />
+                  <Video size={22} />
                 </button>
               </div>
             </div>
 
-            {/* Messages – this gets all remaining height */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3">
               {messages.map((msg) => {
                 const isMine =
                   msg.sender._id === user._id ||
@@ -243,7 +233,7 @@ export default function ChatPage() {
                     }`}
                   >
                     <div
-                      className={`px-4 py-2 rounded-xl max-w-[70%] text-sm ${
+                      className={`px-3 md:px-4 py-2 rounded-xl max-w-[80%] md:max-w-[70%] text-sm ${
                         isMine
                           ? "bg-[#3c2a55] text-white"
                           : "bg-[#20262e] text-gray-200"
@@ -259,7 +249,7 @@ export default function ChatPage() {
 
             {/* Input */}
             <form
-              className="flex items-center gap-2 p-4 border-t border-gray-700 bg-[#151920]"
+              className="flex items-center gap-2 p-3 md:p-4 border-t border-gray-700 bg-[#151920]"
               onSubmit={(e) => {
                 e.preventDefault();
                 messageSender();
@@ -273,7 +263,7 @@ export default function ChatPage() {
               </button>
 
               <input
-                className="flex-1 bg-[#20262e] text-gray-200 px-4 py-2 rounded-lg outline-none focus:ring-1 focus:ring-purple-600"
+                className="flex-1 bg-[#20262e] text-gray-200 px-3 md:px-4 py-2 rounded-lg outline-none focus:ring-1 focus:ring-purple-600 text-sm"
                 placeholder="Type a message..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -285,7 +275,7 @@ export default function ChatPage() {
               <button
                 type="submit"
                 disabled={!message.trim()}
-                className="bg-white text-black px-3 py-2 rounded-lg font-bold hover:bg-gray-300"
+                className="bg-white text-black px-3 py-2 rounded-lg font-bold hover:bg-gray-300 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Send size={18} />
               </button>

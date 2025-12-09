@@ -8,7 +8,11 @@ import { searchUser } from "../store/userSlice";
 import { fetchChatList } from "../store/chatSlice";
 import Bottom from "../components/Bottom";
 import { useSocket } from "../context/SocketContext";
-import { updateChatList,updateOnlineStatus,updateOfflineStatus } from "../store/chatSlice";
+import {
+  updateChatList,
+  updateOnlineStatus,
+  updateOfflineStatus,
+} from "../store/chatSlice";
 import { setActiveChat } from "../store/chatSlice";
 import { useAuth } from "../context/AuthContext";
 
@@ -34,29 +38,29 @@ export default function HomePage() {
     socket.on("getMessage", (message) => {
       dispatch(updateChatList(message));
     });
-    return ()=>socket.off("newMessage");
+    return () => socket.off("newMessage");
   }, [socket, dispatch]);
 
   // update online status
-  useEffect(()=>{
-    socket?.on("userOnline",({userId})=>{
+  useEffect(() => {
+    socket?.on("userOnline", ({ userId }) => {
       dispatch(updateOnlineStatus(userId));
-    })
-  },[chatList, socket,dispatch])
+    });
+  }, [chatList, socket, dispatch]);
 
   // update offline status
-  useEffect(()=>{
-    socket?.on("userOffline",(data)=>{
+  useEffect(() => {
+    socket?.on("userOffline", (data) => {
       dispatch(updateOfflineStatus(data));
-    })
-  },[socket,dispatch])
-  
+    });
+  }, [socket, dispatch]);
+
   // logout handler
   function logoutHandler() {
     axios
       .get(`${API}/api/logout`, { withCredentials: true })
       .then(() => {
-        socket?.disconnect(); 
+        socket?.disconnect();
         window.location.reload();
       })
       .catch((err) => {
@@ -97,31 +101,36 @@ export default function HomePage() {
     fileInput.click();
   }
 
-
   return (
-    <div className="min-h-screen bg-[#0d1117] flex items-center justify-center font-sans text-white">
-      <div className="w-[1100px] h-[600px] bg-[#1a1f29] rounded-2xl overflow-hidden flex shadow-2xl">
+    <div className="min-h-screen bg-[#0d1117] flex items-center justify-center font-sans text-white px-4 md:px-0">
+      <div className="w-full md:w-[1100px] md:h-[600px] bg-[#1a1f29] rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
         {/* Sidebar */}
-        <div className="w-[30%] bg-[#3c2a55] flex flex-col justify-between p-6">
+        <div className="w-full md:w-[30%] bg-[#3c2a55] flex flex-col justify-between p-4 md:p-6">
           {/* Top - User Info */}
           <div>
-            <div className="flex items-center space-x-4 mb-8">
+            <div className="flex items-center space-x-4 mb-6 md:mb-8">
               <img
                 src={user.avatar}
                 alt="avatar"
-                className="w-14 h-14 rounded-full border-2 border-gray-500 object-cover"
+                className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-gray-500 object-cover cursor-pointer"
                 onClick={avatarUpload}
               />
               <div>
-                <h2 className="font-semibold text-lg">{user.name}</h2>
-                <p className="text-sm text-gray-300">{user.username}</p>
+                <h2 className="font-semibold text-base md:text-lg">
+                  {user.name}
+                </h2>
+                <p className="text-xs md:text-sm text-gray-300">
+                  {user.username}
+                </p>
               </div>
             </div>
 
             {/* Contacts Header */}
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-gray-300 text-sm font-semibold">Chats</h3>
-              <div className="flex items-center gap-2 bg-white rounded-md px-2 py-1">
+            <div className="flex justify-between items-center mb-3 gap-2">
+              <h3 className="text-gray-300 text-xs md:text-sm font-semibold">
+                Chats
+              </h3>
+              <div className="flex items-center gap-2 bg-white rounded-md px-2 py-1 flex-1">
                 <UserSearch
                   size={14}
                   className="text-black cursor-pointer"
@@ -129,7 +138,7 @@ export default function HomePage() {
                 />
                 <input
                   type="text"
-                  className="bg-transparent outline-none text-black text-sm flex-1"
+                  className="bg-transparent outline-none text-black text-xs md:text-sm flex-1"
                   placeholder="search user"
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
@@ -138,8 +147,7 @@ export default function HomePage() {
             </div>
 
             {/* Contacts List */}
-            <div className="space-y-3 overflow-y-auto max-h-[400px] pr-2">
-              {/* If search results exist, show them */}
+            <div className="space-y-3 overflow-y-auto max-h-[260px] md:max-h-[400px] pr-1 md:pr-2">
               {searchResults.length > 0 ? (
                 searchResults.map((search) => (
                   <div
@@ -150,15 +158,24 @@ export default function HomePage() {
                       navigate(`/chat/${search.data._id}`);
                     }}
                   >
-                    <p className="font-medium">{
-                      search.data.participants.find((p) => p.username !== user.username).name}</p>
-                    <p className="text-sm text-gray-400">
-                      @{search.data.participants.find((p) => p.username !== user.username).username}
+                    <p className="font-medium text-sm md:text-base">
+                      {
+                        search.data.participants.find(
+                          (p) => p.username !== user.username
+                        ).name
+                      }
+                    </p>
+                    <p className="text-xs md:text-sm text-gray-400">
+                      @
+                      {
+                        search.data.participants.find(
+                          (p) => p.username !== user.username
+                        ).username
+                      }
                     </p>
                   </div>
                 ))
               ) : (
-                /* Show default contacts */
                 <Sidebar contacts={chatList} />
               )}
             </div>
@@ -169,10 +186,12 @@ export default function HomePage() {
         </div>
 
         {/* Chat Area */}
-        <div className="w-[70%] bg-[#161b22] p-10 flex flex-col justify-center items-center relative">
-          <MessageSquare className="text-gray-600 w-20 h-20 mb-6" />
-          <h2 className="text-2xl font-semibold">Welcome to QuicKChat</h2>
-          <p className="text-gray-400 text-sm mt-2">
+        <div className="w-full md:w-[70%] bg-[#161b22] p-6 md:p-10 flex flex-col justify-center items-center relative">
+          <MessageSquare className="text-gray-600 w-16 h-16 md:w-20 md:h-20 mb-4 md:mb-6" />
+          <h2 className="text-xl md:text-2xl font-semibold">
+            Welcome to QuicKChat
+          </h2>
+          <p className="text-gray-400 text-xs md:text-sm mt-2 text-center px-4 md:px-0">
             Select a chat from the left or start a new conversation.
           </p>
         </div>

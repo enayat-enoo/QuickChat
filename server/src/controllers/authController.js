@@ -4,7 +4,7 @@ const {
   hashPassword,
   hashedPasswordVerifier,
 } = require("../utils/passwordHash");
-const uploadImage = require("../config/cloudinary")
+const uploadImage = require("../config/cloudinary");
 
 const saltRounds = Number(process.env.SALT_ROUNDS || 10);
 
@@ -20,7 +20,7 @@ async function userRegistration(req, res) {
   if (user) {
     return res.status(409).json({ message: "user conflict" });
   }
-  
+
   //upload avatar to cloudinary if exists
   if (req.file) {
     try {
@@ -51,7 +51,6 @@ async function userRegistration(req, res) {
 
 //Login Handler Function
 async function login(req, res) {
-  const { email, password } = req.body;
   if (!email || !password) {
     return res.status(409).json({ message: "invalid input" });
   }
@@ -81,7 +80,15 @@ async function login(req, res) {
         maxAge: 24 * 60 * 60 * 1000,
       })
       .status(201)
-      .json({ message: "login successful" , user : {id : findUser._id, username : findUser.username, name : findUser.name,avatar : findUser.avatar}});
+      .json({
+        message: "login successful",
+        user: {
+          id: findUser._id,
+          username: findUser.username,
+          name: findUser.name,
+          avatar: findUser.avatar,
+        },
+      });
   } catch (error) {
     return res.status(500).json({ message: "server Error" });
   }
@@ -89,11 +96,14 @@ async function login(req, res) {
 
 //Logout Handler function
 async function logout(req, res) {
-  return res.clearCookie("token", {
-    httpOnly: true,
-    secure: false,
-    sameSite: "lax"
-  }).status(200).json({ message: "logout successful" });
+  return res
+    .clearCookie("token", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    })
+    .status(200)
+    .json({ message: "logout successful" });
 }
 
 module.exports = {
