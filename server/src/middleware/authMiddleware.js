@@ -1,7 +1,8 @@
 const  {tokenVerifier}  = require("../utils/generateToken");
-
+const cookie = require('cookie');
 async function isAuthMiddleware(req, res, next) {
-  console.log("Received token:", token);
+  const cookies = cookie.parse(req.headers.cookie || '');
+  const token = cookies.token;
   if (!token) {
     return res.status(401).json({ message: "token doesn't exist" });
   }
