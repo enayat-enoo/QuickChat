@@ -7,20 +7,21 @@ import { ToastContainer } from "react-toastify";
 import store from "./store.js";
 import { persistor } from "./store.js";
 import { PersistGate } from "redux-persist/integration/react";
+import CallContext from "./context/CallContext.jsx";
+import AppLayout from "./AppLayout.jsx";
 import "./index.css";
-import App from "./App.jsx";
-
-console.log(store);
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <AuthProvider>
       <SocketProvider>
+        <CallContext>
         <Provider store={store}>
           <PersistGate loading={<div>Loading...</div>} persistor={persistor}>
-            <App />
+            <AppLayout />
           </PersistGate>
         </Provider>
+        </CallContext>
       </SocketProvider>
     </AuthProvider>
     <ToastContainer position="top-center" theme="dark" />

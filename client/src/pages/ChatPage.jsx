@@ -14,6 +14,7 @@ import {
 } from "../store/chatSlice";
 import { useDispatch } from "react-redux";
 import { useSocket } from "../context/SocketContext";
+import { useCall } from "../context/CallContext";
 
 const API = import.meta.env.VITE_API_URL;
 export default function ChatPage() {
@@ -22,6 +23,8 @@ export default function ChatPage() {
   const { socket } = useSocket();
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState([]);
+  const { setCallState, setLocalStream, setRemoteStream, peerConnectionRef } =
+    useCall();
 
   const messageEndRef = useRef(null);
 
@@ -32,8 +35,9 @@ export default function ChatPage() {
   const dispatch = useDispatch();
 
   const otherParticipant = activeChat?.participants?.find(
-    (p) => p.username !== user.username
+    (p) => p.username !== user.username,
   );
+
 
   let statusText = "";
   if (otherParticipant) {
@@ -42,6 +46,131 @@ export default function ChatPage() {
       : `Last seen at ${new Date(otherParticipant.lastSeen).toLocaleString()}`;
     if (statusText.includes("Invalid Date")) {
       statusText = "";
+    }
+  }
+
+  async function startVideoCall() {
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
+      setLocalStream(stream);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+
+    peerConnectionRef.current = new RTCPeerConnection({
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302",
+        },
+      ],
+    });
+
+    const pc = peerConnectionRef.current;
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit("ICE_CANDIDATE", {
+          toUserId: otherParticipant._id,
+          candidate: event.candidate,
+        });
+      }
+    };
+
+    pc.ontrack = (event) => {
+      setRemoteStream(event.streams[0]);
+    };
+
+    stream.getTracks().forEach((track) => {
+      pc.addTrack(track, stream);
+    });
+
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      if (!socket || !otherParticipant) return;
+      socket.emit("CALL_INITIATE", {
+        toUserId: otherParticipant._id,
+        callType: "video",
+        name: user.name,
+        avatar: user.avatar,
+        sdp: offer,
+      });
+      setCallState({
+        status: "outgoing",
+        callType: "video",
+        peerUserId: otherParticipant._id,
+        isCaller: true,
+        callerDetails: { 
+          name : otherParticipant.name,
+          avatar : otherParticipant.avatar || null
+         },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  async function startVoiceCall() {
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setLocalStream(stream);
+    } catch (error) {
+      console.log(error);
+      return;
+    }
+
+    peerConnectionRef.current = new RTCPeerConnection({
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302",
+        },
+      ],
+    });
+
+    const pc = peerConnectionRef.current;
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit("ICE_CANDIDATE", {
+          toUserId: otherParticipant._id,
+          candidate: event.candidate,
+        });
+      }
+    };
+
+    stream.getAudioTracks().forEach((track) => {
+      pc.addTrack(track, stream);
+    });
+
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      if (!socket || !otherParticipant) return;
+      socket.emit("CALL_INITIATE", {
+        toUserId: otherParticipant._id,
+        callType: "voice",
+        name: user.name,
+        avatar: user.avatar,
+        sdp: offer,
+      });
+      setCallState({
+        status: "outgoing",
+        callType: "voice",
+        peerUserId: otherParticipant._id,
+        isCaller: true,
+        callerDetails: { 
+          name : otherParticipant.name,
+          avatar : otherParticipant.avatar || null
+         },
+      });
+    } catch (error) {
+      console.log(error);
+      return;
     }
   }
 
@@ -106,7 +235,7 @@ export default function ChatPage() {
 
     // guard activeChat / receiverId
     const receiver = activeChat?.participants?.find(
-      (p) => p.username !== user.username
+      (p) => p.username !== user.username,
     );
     const receiverIdSafe = receiver ? receiver._id : null;
     const currentChatId = chatId || activeChat?._id;
@@ -209,10 +338,10 @@ export default function ChatPage() {
                 </div>
               </div>
               <div className="flex items-center gap-4 md:gap-5 text-gray-300">
-                <button className="hover:text-white">
+                <button className="hover:text-white" onClick={startVoiceCall}>
                   <Phone size={18} />
                 </button>
-                <button className="hover:text-white">
+                <button className="hover:text-white" onClick={startVideoCall}>
                   <Video size={22} />
                 </button>
               </div>

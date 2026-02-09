@@ -25,7 +25,7 @@ export function SocketProvider({ children }) {
     return () => {
       newSocket.disconnect();
     };
-  }, [user?.token]);
+  }, [user?._id,user?.token,user]);
 
   return (
     <SocketContext.Provider value={{ socket }}>

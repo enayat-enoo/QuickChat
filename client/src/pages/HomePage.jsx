@@ -20,6 +20,7 @@ const API = import.meta.env.VITE_API_URL;
 
 export default function HomePage() {
   const { user } = useAuth();
+  // const { setCallState } = useCall();
   const [userSearch, setUserSearch] = useState("");
   const { socket } = useSocket();
   const navigate = useNavigate();
@@ -187,7 +188,6 @@ export default function HomePage() {
             <Bottom props={{ logoutHandler }} />
           </div>
         </div>
-
         {/* RIGHT: Welcome panel – desktop only */}
         <div className="hidden md:flex md:w-[70%] bg-[#161b22] p-10 flex-col justify-center items-center relative">
           <MessageSquare className="text-gray-600 w-20 h-20 mb-6" />
