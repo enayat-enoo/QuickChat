@@ -62,6 +62,10 @@ export default function InCallVideoUI() {
     socket.emit("CALL_DROP", { toUserId: callState.peerUserId });
   }
   
+  function toggleMicMute(){
+    localStream.getAudioTracks()[0].enabled = !localStream.getAudioTracks()[0].enabled;
+    setMuted(!muted);
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
@@ -110,7 +114,7 @@ export default function InCallVideoUI() {
         <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center">
           <div className="bg-black/40 backdrop-blur-md border border-gray-700 px-4 py-3 rounded-full flex items-center gap-4">
             <button
-              onClick={() => setMuted(!muted)}
+              onClick={toggleMicMute}
               className={`w-12 h-12 rounded-full flex items-center justify-center transition 
               ${muted ? "bg-gray-600 text-white" : "bg-white text-black"}`}
             >
@@ -125,13 +129,13 @@ export default function InCallVideoUI() {
               {cameraOff ? <VideoOff size={18} /> : <Video size={18} />}
             </button>
 
-            <button className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center">
+            {/* <button className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center"> */}
               {/* <ArrowRepeat size={18}/> */}
-            </button>
+            {/* </button> */}
 
-            <button className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center">
+            {/* <button className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center">
               <MessageCircle size={18} />
-            </button>
+            </button> */}
 
             <button
               className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center text-white shadow-xl"

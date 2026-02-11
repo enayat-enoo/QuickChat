@@ -163,7 +163,7 @@ export default function HomePage() {
                     <p className="font-medium text-sm md:text-base">
                       {
                         search.data.participants.find(
-                          (p) => p.username !== user.username
+                          (p) => p.username !== user.username,
                         ).name
                       }
                     </p>
@@ -171,7 +171,7 @@ export default function HomePage() {
                       @
                       {
                         search.data.participants.find(
-                          (p) => p.username !== user.username
+                          (p) => p.username !== user.username,
                         ).username
                       }
                     </p>
