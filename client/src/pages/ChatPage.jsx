@@ -192,6 +192,8 @@ export default function ChatPage() {
     setHasMore(false);
     setCursor(null);
 
+    socket?.emit("markRead", { chatId: activeChat._id });
+
     axios
       .get(`${API}/api/message/getmessage?chatId=${activeChat._id}`, {
         withCredentials: true,
@@ -348,12 +350,8 @@ export default function ChatPage() {
 
   // Early return if no chat selected (prevents "cannot read properties of undefined")
   if (!activeChat) {
-    return (
-      <div className="min-h-screen w-full bg-[#0d1117] flex items-center justify-center">
-        {/* You can keep Sidebar here if you want it visible on empty state */}
-        <div className="text-white">Select a chat to start messaging</div>
-      </div>
-    );
+    navigate("/");
+    return null;
   }
 
   return (
@@ -391,6 +389,26 @@ export default function ChatPage() {
             {/* Top bar */}
             <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3 md:py-4 border-b border-gray-700">
               <div className="flex items-center gap-3">
+                {/* Back button — mobile only */}
+                <button
+                  className="md:hidden text-gray-400 hover:text-white mr-1"
+                  onClick={() => navigate("/")}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
+                </button>
+
                 <img
                   src={getAvatar(
                     otherParticipant.avatar,
@@ -402,9 +420,14 @@ export default function ChatPage() {
                   <h3 className="text-white font-semibold text-sm md:text-base">
                     {otherParticipant.name}
                   </h3>
-                  <p className="text-xs text-green-400">{statusText}</p>
+                  <p
+                    className={`text-xs ${otherParticipant.isOnline ? "text-green-400" : "text-gray-500"}`}
+                  >
+                    {statusText}
+                  </p>
                 </div>
               </div>
+
               <div className="flex items-center gap-4 md:gap-5 text-gray-300">
                 <button className="hover:text-white" onClick={startVoiceCall}>
                   <Phone size={18} />
