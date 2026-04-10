@@ -1,48 +1,54 @@
-import App from "./App";
-import { useCall } from "./context/CallContext";
-import OutgoingVideoCallUI from "./components/OutgoingVideoCallUI";
-import IncomingVideoCallUI from "./components/IncomingVideoCallUI";
-import InCallVideoUI from "./components/InCallVideoUI";
-import InCallVoiceUI from "./components/InCallVoiceUI";
-import IncomingVoiceCallUI from "./components/InComingVoiceCallUI";
-import OutgoingVoiceCallUI from "./components/OutgoingVoiceCallUI";
-import { useSelector } from "react-redux";
+import { useEffect } from "react";
+import { Outlet } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { fetchChatList } from "./store/chatSlice";
 import { useAuth } from "./context/AuthContext";
-import { useCallListeners } from "./hooks/useCallListeners";
-import { useSocket } from "./context/SocketContext";
+import { useGlobalSocketEvents } from "./hooks/useGlobalSocketEvents";
+import InComingVoiceCallUI from "./components/InComingVoiceCallUI";
+import IncomingVideoCallUI from "./components/IncomingVideoCallUI";
+import OutgoingVoiceCallUI from "./components/OutgoingVoiceCallUI";
+import OutgoingVideoCallUI from "./components/OutgoingVideoCallUI";
+import InCallVoiceUI from "./components/InCallVoiceUI";
+import InCallVideoUI from "./components/InCallVideoUI";
+import { useCall } from "./context/CallContext";
+
 export default function AppLayout() {
-  const { callState } = useCall();
+  const dispatch = useDispatch();
   const { user } = useAuth();
-  const { socket } = useSocket();
-  const activeChat = useSelector((state) => state.chat.activeChat);
+  const { callState } = useCall();
 
-  const otherParticipant = activeChat?.participants?.find(
-    (p) => p.username !== user?.username
-  );
+  useGlobalSocketEvents();
 
-  useCallListeners(socket);
+  // Fetch chat list once when user is available
+  useEffect(() => {
+    if (user) {
+      dispatch(fetchChatList());
+    }
+  }, [user, dispatch]);
 
   return (
     <>
-      <App />
-      {callState.status === "outgoing" && callState.callType === "video" && (
-        <OutgoingVideoCallUI otherParticipant={otherParticipant} />
+      {/* Global call overlays — shown on top of any page */}
+      {callState?.status === "incoming" && callState?.callType === "voice" && (
+        <InComingVoiceCallUI />
       )}
-      {callState.status === "outgoing" && callState.callType === "voice" && (
-        <OutgoingVoiceCallUI otherParticipant={otherParticipant} />
-      )}
-      {callState.status === "incoming" && callState.callType === "video" && (
+      {callState?.status === "incoming" && callState?.callType === "video" && (
         <IncomingVideoCallUI />
       )}
-      {callState.status === "incoming" && callState.callType === "voice" && (
-        <IncomingVoiceCallUI />
+      {callState?.status === "outgoing" && callState?.callType === "voice" && (
+        <OutgoingVoiceCallUI />
       )}
-      {callState.status === "in-call" && callState.callType === "video" && (
-        <InCallVideoUI />
+      {callState?.status === "outgoing" && callState?.callType === "video" && (
+        <OutgoingVideoCallUI />
       )}
-      {callState.status === "in-call" && callState.callType === "voice" && (
+      {callState?.status === "in-call" && callState?.callType === "voice" && (
         <InCallVoiceUI />
       )}
+      {callState?.status === "in-call" && callState?.callType === "video" && (
+        <InCallVideoUI />
+      )}
+
+      <Outlet />
     </>
   );
 }

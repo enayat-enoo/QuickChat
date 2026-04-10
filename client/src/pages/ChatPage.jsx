@@ -8,9 +8,7 @@ import Sidebar from "../components/Sidebar";
 import ChatLoader from "../components/ChatLoader";
 import { useAuth } from "../context/AuthContext";
 import {
-  updateChatList,
-  updateOnlineStatus,
-  updateOfflineStatus,
+  updateChatList
 } from "../store/chatSlice";
 import { useDispatch } from "react-redux";
 import { useSocket } from "../context/SocketContext";
@@ -255,25 +253,6 @@ export default function ChatPage() {
     };
   }, [socket, activeChat]);
 
-  // update online status
-  useEffect(() => {
-    if (!socket) return;
-    const userOnlineHandler = (userId) => {
-      dispatch(updateOnlineStatus(userId));
-    };
-    socket?.on("userOnline", userOnlineHandler);
-    return () => socket.off("userOnline", userOnlineHandler);
-  }, [socket, dispatch]);
-
-  // update offline status
-  useEffect(() => {
-    if (!socket) return;
-    const userOfflineHandler = (data) => {
-      dispatch(updateOfflineStatus(data));
-    };
-    socket?.on("userOffline", userOfflineHandler);
-    return () => socket.off("userOffline", userOfflineHandler);
-  }, [socket, dispatch]);
 
   function messageSender() {
     if (!message.trim()) return;

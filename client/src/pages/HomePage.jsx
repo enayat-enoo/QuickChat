@@ -8,11 +8,6 @@ import { searchUser } from "../store/userSlice";
 import { fetchChatList } from "../store/chatSlice";
 import Bottom from "../components/Bottom";
 import { useSocket } from "../context/SocketContext";
-import {
-  updateChatList,
-  updateOnlineStatus,
-  updateOfflineStatus,
-} from "../store/chatSlice";
 import { setActiveChat } from "../store/chatSlice";
 import { useAuth } from "../context/AuthContext";
 import { getAvatar } from "../utils/avatarHelper";
@@ -34,28 +29,6 @@ export default function HomePage() {
     dispatch(fetchChatList());
   }, [dispatch]);
 
-  // listen for incoming messages
-  useEffect(() => {
-    if (!socket) return;
-    socket.on("getMessage", (message) => {
-      dispatch(updateChatList(message));
-    });
-    return () => socket.off("newMessage");
-  }, [socket, dispatch]);
-
-  // update online status
-  useEffect(() => {
-    socket?.on("userOnline", ({ userId }) => {
-      dispatch(updateOnlineStatus(userId));
-    });
-  }, [chatList, socket, dispatch]);
-
-  // update offline status
-  useEffect(() => {
-    socket?.on("userOffline", (data) => {
-      dispatch(updateOfflineStatus(data));
-    });
-  }, [socket, dispatch]);
 
   // logout handler
   function logoutHandler() {
