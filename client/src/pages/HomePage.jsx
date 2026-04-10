@@ -1,11 +1,10 @@
 import { MessageSquare, UserSearch } from "lucide-react";
 import axios from "axios";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState} from "react";
 import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { searchUser } from "../store/userSlice";
-import { fetchChatList } from "../store/chatSlice";
 import Bottom from "../components/Bottom";
 import { useSocket } from "../context/SocketContext";
 import { setActiveChat } from "../store/chatSlice";
@@ -16,18 +15,12 @@ const API = import.meta.env.VITE_API_URL;
 
 export default function HomePage() {
   const { user, setUser } = useAuth();
-  // const { setCallState } = useCall();
   const [userSearch, setUserSearch] = useState("");
   const { socket } = useSocket();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { searchResults } = useSelector((state) => state.user);
   const chatList = useSelector((state) => state.chat?.chatList ?? []);
-
-  // fetch chat list on component mount
-  useEffect(() => {
-    dispatch(fetchChatList());
-  }, [dispatch]);
 
 
   // logout handler

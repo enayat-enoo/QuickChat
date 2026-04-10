@@ -5,7 +5,6 @@ import { AuthContext } from "../context/AuthContext";
 import { useContext } from "react";
 import { toast } from "react-toastify";
 import axios from "axios";
-import { useSocket } from "../context/SocketContext";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -15,7 +14,6 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const { setUser } = useContext(AuthContext);
-  const { socket } = useSocket();
   const incorrectUserToast = () => {
     toast("Wrong email or password");
   };
@@ -36,7 +34,6 @@ export default function Login() {
       )
       .then((res) => {
         setUser(res.data.user);
-        socket?.connect();
         navigate("/");
       })
       .catch((err) => {
