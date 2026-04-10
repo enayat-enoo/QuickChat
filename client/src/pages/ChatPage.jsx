@@ -38,7 +38,6 @@ export default function ChatPage() {
     (p) => p.username !== user.username,
   );
 
-
   let statusText = "";
   if (otherParticipant) {
     statusText = otherParticipant.isOnline
@@ -105,10 +104,10 @@ export default function ChatPage() {
         callType: "video",
         peerUserId: otherParticipant._id,
         isCaller: true,
-        callerDetails: { 
-          name : otherParticipant.name,
-          avatar : otherParticipant.avatar || null
-         },
+        callerDetails: {
+          name: otherParticipant.name,
+          avatar: otherParticipant.avatar || null,
+        },
       });
     } catch (error) {
       console.log(error);
@@ -163,10 +162,10 @@ export default function ChatPage() {
         callType: "voice",
         peerUserId: otherParticipant._id,
         isCaller: true,
-        callerDetails: { 
-          name : otherParticipant.name,
-          avatar : otherParticipant.avatar || null
-         },
+        callerDetails: {
+          name: otherParticipant.name,
+          avatar: otherParticipant.avatar || null,
+        },
       });
     } catch (error) {
       console.log(error);
@@ -195,6 +194,10 @@ export default function ChatPage() {
       setMessages([]);
     };
   }, [activeChat?._id]);
+
+  useEffect(() => {
+    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   useEffect(() => {
     if (!socket) return;

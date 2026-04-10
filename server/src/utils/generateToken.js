@@ -1,23 +1,18 @@
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
-const secretKey = process.env.SECRET_KEY || "secret";
-async function tokenGenerator(payload){
-    try {
-        return jwt.sign(payload,secretKey, {expiresIn : "2d"});
-    } catch (error) {
-        console.log(error);
-    }
+if (!process.env.SECRET_KEY) {
+  throw new Error("FATAL: SECRET_KEY environment variable is not set.");
 }
 
-async function tokenVerifier(token){
-    try {
-       return jwt.verify(token,secretKey); 
-    } catch (error) {
-        console.log(error);
-    }
+const secretKey = process.env.SECRET_KEY;
+
+async function tokenGenerator(payload) {
+  return jwt.sign(payload, secretKey, { expiresIn: "2d" });
 }
 
-module.exports={
-    tokenGenerator,
-    tokenVerifier
+async function tokenVerifier(token) {
+  return jwt.verify(token, secretKey);
 }
+
+module.exports = { tokenGenerator, tokenVerifier };

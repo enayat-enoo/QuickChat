@@ -5,17 +5,15 @@ const {
   hashedPasswordVerifier,
 } = require("../utils/passwordHash");
 const uploadImage = require("../config/cloudinary");
+const { validateRequest } = require("../middleware/validationMiddleware");
 
 const saltRounds = Number(process.env.SALT_ROUNDS || 10);
 
 //User Registration Handler Function
 async function userRegistration(req, res) {
+  const validationError = validateRequest(req, res);
+  if (validationError) return;
   const { name, username, email, password } = req.body;
-  if (!name || !username || !email || !password) {
-    return res.status(400).json({
-      message: "missing required fields",
-    });
-  }
   const user = await userModel.findOne({ username });
   if (user) {
     return res.status(409).json({ message: "user conflict" });
@@ -51,10 +49,9 @@ async function userRegistration(req, res) {
 
 //Login Handler Function
 async function login(req, res) {
+  const validationError = validateRequest(req, res);
+  if (validationError) return;
   const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(409).json({ message: "invalid input" });
-  }
   try {
     const findUser = await userModel.findOne({ email });
     if (!findUser) {
