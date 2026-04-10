@@ -41,7 +41,7 @@ const authLimiter = rateLimit({
 })
 
 //routes
-app.use("/api", authLimiter ,authRouter);
+app.use("/api",authLimiter,authRouter);
 app.use("/api/message", isAuthMiddleware ,messageRouter);
 app.use("/api/user", isAuthMiddleware, userInfoRouter);
 
