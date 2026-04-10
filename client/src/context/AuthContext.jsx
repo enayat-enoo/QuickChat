@@ -1,37 +1,28 @@
-import { createContext, useState, useEffect,useContext } from "react";
+import { createContext, useState, useEffect, useContext } from "react";
 import axios from "axios";
 
 export const AuthContext = createContext();
 const API = import.meta.env.VITE_API_URL;
+
 export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
-
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("user", JSON.stringify(user));
-    } else {
-      localStorage.removeItem("user");
-    }
-  }, [user]);
-
+  // On mount — restore session from httpOnly cookie, not localStorage
   useEffect(() => {
     axios
       .get(`${API}/api/user`, { withCredentials: true })
       .then((res) => {
         setUser(res.data.data);
-        setLoading(false);
       })
-      .catch((err) => {
-        console.log(err);
+      .catch(() => {
         setUser(null);
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, []);
+
   return (
     <AuthContext.Provider value={{ user, setUser, loading }}>
       {children}
@@ -39,6 +30,4 @@ export function AuthProvider({ children }) {
   );
 }
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

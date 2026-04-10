@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema(
     },
     avatar: {
       type: String,
-      default: "https://fallback.avatar",
+      default: "",
     },
     bio: {
       type: String,
@@ -62,6 +62,8 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+userSchema.index({ isOnline: 1 });
 
 const userModel = mongoose.model('userModel',userSchema);
 

@@ -29,6 +29,10 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+messageSchema.index({ chatId: 1, createdAt: -1 });
+messageSchema.index({ sender: 1 });
+messageSchema.index({ receiver: 1 });
+
 const messageModel = mongoose.model('messageModel',messageSchema);
 
 module.exports = messageModel;

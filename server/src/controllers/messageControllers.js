@@ -13,19 +13,42 @@ async function sendMessage(req, res) {
 
 //retrive message handler
 async function getMessage(req, res) {
-  const chatId = req.query.chatId;
+  const { chatId, cursor, limit = 50 } = req.query;
+
+  if (!chatId) {
+    return res.status(400).json({ message: "chatId is required" });
+  }
+
   try {
-    const message = await messageModel
-      .find({ chatId })
+    const query = { chatId };
+
+    // If cursor exists, only fetch messages older than that message's timestamp
+    if (cursor) {
+      query.createdAt = { $lt: new Date(cursor) };
+    }
+
+    const messages = await messageModel
+      .find(query)
       .populate("sender", "name username avatar")
       .populate("receiver", "name username avatar")
-      .sort({ createdAt: 1 });
+      .sort({ createdAt: -1 }) // newest first
+      .limit(Number(limit));
+
+    // Reverse so oldest-first order is restored for the UI
+    const ordered = messages.reverse();
+
+    // Tell client if there are more messages to load above
+    const hasMore = messages.length === Number(limit);
+
     return res.status(200).json({
-      message: "message fetched successfully",
-      data: message,
+      message: "messages fetched successfully",
+      data: ordered,
+      hasMore,
+      // next cursor = timestamp of the oldest message in this batch
+      nextCursor: ordered.length > 0 ? ordered[0].createdAt : null,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 }

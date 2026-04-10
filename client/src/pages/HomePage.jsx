@@ -1,6 +1,6 @@
 import { MessageSquare, UserSearch } from "lucide-react";
 import axios from "axios";
-import { useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -15,11 +15,12 @@ import {
 } from "../store/chatSlice";
 import { setActiveChat } from "../store/chatSlice";
 import { useAuth } from "../context/AuthContext";
+import { getAvatar } from "../utils/avatarHelper";
 
 const API = import.meta.env.VITE_API_URL;
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   // const { setCallState } = useCall();
   const [userSearch, setUserSearch] = useState("");
   const { socket } = useSocket();
@@ -62,10 +63,12 @@ export default function HomePage() {
       .get(`${API}/api/logout`, { withCredentials: true })
       .then(() => {
         socket?.disconnect();
-        window.location.reload();
+        // Clear any stale localStorage data from previous versions
+        localStorage.clear();
+        window.location.href = "/login";
       })
       .catch((err) => {
-        console.log(err);
+        console.error(err);
       });
   }
 
@@ -77,34 +80,43 @@ export default function HomePage() {
   }
 
   // Handler to upload avatar
+  const fileInputRef = useRef(null);
+
   function avatarUpload() {
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "image/*";
-    fileInput.onchange = (e) => {
-      const file = e.target.files[0];
-      const formData = new FormData();
-      formData.append("avatar", file);
-      axios
-        .post(`${API}/api/user/avatar`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          withCredentials: true,
-        })
-        .then(() => {
-          window.location.reload();
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    };
-    fileInput.click();
+    fileInputRef.current?.click();
+  }
+
+  function handleAvatarChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    axios
+      .post(`${API}/api/user/avatar`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true,
+      })
+      .then((res) => {
+        // Update user in context directly — no page reload needed
+        setUser((prev) => ({ ...prev, avatar: res.data.avatar }));
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   }
 
   return (
     <div className="min-h-screen bg-[#0d1117] font-sans text-white flex md:items-center md:justify-center">
       <div className="w-full h-screen md:w-[1100px] md:h-[600px] bg-[#1a1f29] flex flex-col md:flex-row rounded-none md:rounded-2xl overflow-hidden shadow-none md:shadow-2xl">
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={handleAvatarChange}
+        />
         {/* LEFT: Chat list (full screen on mobile) */}
         <div className="w-full md:w-[30%] bg-[#3c2a55] flex flex-col h-full">
           {/* Top + chat list */}
@@ -112,7 +124,7 @@ export default function HomePage() {
             {/* User info */}
             <div className="flex items-center space-x-4 mb-6 md:mb-8">
               <img
-                src={user.avatar}
+                src={getAvatar(user.avatar, user.name)}
                 alt="avatar"
                 className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-gray-500 object-cover cursor-pointer"
                 onClick={avatarUpload}
