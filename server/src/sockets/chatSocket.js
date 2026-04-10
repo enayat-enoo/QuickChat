@@ -9,7 +9,11 @@ async function messageSocket(io) {
 
     // Mark user online
     try {
-      await userModel.findByIdAndUpdate(userId, { isOnline: true }, { new: true });
+      await userModel.findByIdAndUpdate(
+        userId,
+        { isOnline: true },
+        { new: true },
+      );
       io.emit("userOnline", { userId });
     } catch (error) {
       console.error("Error marking user online:", error);
@@ -43,10 +47,19 @@ async function messageSocket(io) {
 
         // Emit back to sender to confirm (replaces optimistic message with real DB record)
         socket.emit("messageSent", message);
-
       } catch (error) {
         console.error("sendMessage socket error:", error);
         socket.emit("messageError", { message: "Failed to send message" });
+      }
+    });
+    // Reset unread count when user opens a chat
+    socket.on("markRead", async ({ chatId }) => {
+      try {
+        await chatModel.findByIdAndUpdate(chatId, {
+          $set: { [`participantInfo.${userId}.unreadCount`]: 0 },
+        });
+      } catch (error) {
+        console.error("markRead error:", error);
       }
     });
 
@@ -61,7 +74,7 @@ async function messageSocket(io) {
             const updatedUser = await userModel.findByIdAndUpdate(
               userId,
               { isOnline: false, lastSeen: new Date() },
-              { new: true }
+              { new: true },
             );
             io.emit("userOffline", {
               userId,
