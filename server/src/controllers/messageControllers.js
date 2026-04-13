@@ -62,7 +62,7 @@ async function getChats(req, res) {
       })
       .populate("participants", "name username avatar isOnline lastSeen")
       .populate("lastMessage", "content createdAt")
-      .sort({ updateAt: -1 });
+      .sort({ updatedAt: -1 });
     return res
       .status(200)
       .json({ message: "chats fetched successfully", data: chatList });

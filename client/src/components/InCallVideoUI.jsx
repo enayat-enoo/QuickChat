@@ -17,10 +17,16 @@ export default function InCallVideoUI() {
   const [muted, setMuted] = useState(false);
   const [cameraOff, setCameraOff] = useState(false);
   const { socket } = useSocket();
-  const { callState, setCallState, localStream, remoteStream, callActive } = useCall();
+  const {
+    callState,
+    setCallState,
+    localStream,
+    remoteStream,
+    callActive,
+    setCallActive,
+  } = useCall();
   const [seconds, setSeconds] = useState(0);
   const { name } = callState.callerDetails;
-
 
   const remoteVideoRef = useRef(null);
   const localVideoRef = useRef(null);
@@ -35,14 +41,14 @@ export default function InCallVideoUI() {
     }
   }, [remoteVideoRef, localVideoRef, localStream, remoteStream]);
 
-  useEffect(()=>{
-    if(callActive){
+  useEffect(() => {
+    if (callActive) {
       timerRef.current = setInterval(() => {
         setSeconds((prev) => prev + 1);
       }, 1000);
     }
-    return ()=> clearInterval(timerRef.current);
-  },[callActive])
+    return () => clearInterval(timerRef.current);
+  }, [callActive]);
 
   const formatTime = (secs) => {
     const mins = Math.floor(secs / 60);
@@ -51,6 +57,8 @@ export default function InCallVideoUI() {
   };
 
   function resetCall() {
+    localStream?.getTracks().forEach((t) => t.stop());
+    setCallActive(false);
     setCallState({
       status: "idle",
       callType: null,
@@ -61,9 +69,10 @@ export default function InCallVideoUI() {
     });
     socket.emit("CALL_DROP", { toUserId: callState.peerUserId });
   }
-  
-  function toggleMicMute(){
-    localStream.getAudioTracks()[0].enabled = !localStream.getAudioTracks()[0].enabled;
+
+  function toggleMicMute() {
+    localStream.getAudioTracks()[0].enabled =
+      !localStream.getAudioTracks()[0].enabled;
     setMuted(!muted);
   }
 
@@ -84,7 +93,9 @@ export default function InCallVideoUI() {
             <div className="w-3 h-3 rounded-full bg-green-400"></div>
             <div className="leading-none">
               <p className="text-white text-sm font-semibold">{name}</p>
-              <p className="text-gray-300 text-xs">{callActive? formatTime(seconds) : "connecting..."}</p>
+              <p className="text-gray-300 text-xs">
+                {callActive ? formatTime(seconds) : "connecting..."}
+              </p>
             </div>
           </div>
 
@@ -130,7 +141,7 @@ export default function InCallVideoUI() {
             </button>
 
             {/* <button className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center"> */}
-              {/* <ArrowRepeat size={18}/> */}
+            {/* <ArrowRepeat size={18}/> */}
             {/* </button> */}
 
             {/* <button className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center">

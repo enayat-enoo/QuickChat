@@ -4,6 +4,8 @@ import { useDispatch } from "react-redux";
 import { fetchChatList } from "./store/chatSlice";
 import { useAuth } from "./context/AuthContext";
 import { useGlobalSocketEvents } from "./hooks/useGlobalSocketEvents";
+import { useCallListeners } from "./hooks/useCallListeners";
+import { useSocket } from "./context/SocketContext";
 import InComingVoiceCallUI from "./components/InComingVoiceCallUI";
 import IncomingVideoCallUI from "./components/IncomingVideoCallUI";
 import OutgoingVoiceCallUI from "./components/OutgoingVoiceCallUI";
@@ -16,10 +18,14 @@ export default function AppLayout() {
   const dispatch = useDispatch();
   const { user } = useAuth();
   const { callState } = useCall();
+  const { socket } = useSocket();
 
+  // Global socket listeners — online/offline/messages
   useGlobalSocketEvents();
 
-  // Fetch chat list once when user is available
+  // Call listeners — CALL_INCOMING, CALL_ACCEPTED, ICE_CANDIDATE, CALL_DROP
+  useCallListeners(socket);
+
   useEffect(() => {
     if (user) {
       dispatch(fetchChatList());
@@ -28,7 +34,6 @@ export default function AppLayout() {
 
   return (
     <>
-      {/* Global call overlays — shown on top of any page */}
       {callState?.status === "incoming" && callState?.callType === "voice" && (
         <InComingVoiceCallUI />
       )}
@@ -47,7 +52,6 @@ export default function AppLayout() {
       {callState?.status === "in-call" && callState?.callType === "video" && (
         <InCallVideoUI />
       )}
-
       <Outlet />
     </>
   );

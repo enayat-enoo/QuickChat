@@ -4,7 +4,14 @@ import { useSocket } from "../context/SocketContext";
 
 export default function InCallVoiceUI() {
   const { socket } = useSocket();
-  const { callState, setCallState, remoteStream, callActive } = useCall();
+  const {
+    localStream,
+    callState,
+    setCallState,
+    remoteStream,
+    callActive,
+    setCallActive,
+  } = useCall();
   const [seconds, setSeconds] = useState(0);
 
   const audioRef = useRef(null);
@@ -34,6 +41,8 @@ export default function InCallVoiceUI() {
   }, [audioRef, remoteStream]);
 
   function resetCall() {
+    localStream?.getTracks().forEach((t) => t.stop());
+    setCallActive(false);
     setCallState({
       status: "idle",
       callType: null,
@@ -56,7 +65,9 @@ export default function InCallVoiceUI() {
         </div>
 
         <p className="text-white text-3xl font-semibold mt-6">{name}</p>
-        <p className="text-gray-400 text-lg mt-1">{callActive? formatTime(seconds) : "connecting..."}</p>
+        <p className="text-gray-400 text-lg mt-1">
+          {callActive ? formatTime(seconds) : "connecting..."}
+        </p>
         <audio
           ref={audioRef}
           autoPlay

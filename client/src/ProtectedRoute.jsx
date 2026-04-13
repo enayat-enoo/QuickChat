@@ -4,7 +4,6 @@ import { useAuth } from "./context/AuthContext";
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
-  // Still checking session — show nothing until we know
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0d1117] flex items-center justify-center">
@@ -16,9 +15,7 @@ export default function ProtectedRoute({ children }) {
     );
   }
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!user) return <Navigate to="/login" replace />;
 
   return children;
 }

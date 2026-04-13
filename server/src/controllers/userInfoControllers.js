@@ -6,6 +6,8 @@ async function getUserInfo(req, res) {
   try {
     const userInformation = await userModel.findById(userId);
     const data = {
+      _id: userInformation._id,
+      id: userInformation._id,
       name: userInformation.name,
       username: userInformation.username,
       avatar: userInformation.avatar,
@@ -48,7 +50,7 @@ async function getSearchedUserInfo(req, res) {
       });
       userData = await userData.populate(
         "participants",
-        "name username avatar isOnline lastSeen"
+        "name username avatar isOnline lastSeen",
       );
     }
     return res.status(200).json({ message: "user found", data: userData });
@@ -70,19 +72,21 @@ async function getUserInfoByChatId(req, res) {
   }
 }
 
-async function uploadAvatar(req,res){
+async function uploadAvatar(req, res) {
   //upload avatar to cloudinary if exists
-  if(req.file){
+  if (req.file) {
     try {
       const result = await uploadImage(req.file.buffer);
       //update user avatar in db
-      await userModel.findByIdAndUpdate(req.user.id,{
-        avatar : result.url
+      await userModel.findByIdAndUpdate(req.user.id, {
+        avatar: result.url,
       });
-      return  res.status(200).json({message : "Avatar uploaded successfully", avatarUrl : result.url});
+      return res
+        .status(200)
+        .json({ message: "Avatar uploaded successfully", avatar: result.url });
     } catch (error) {
       console.log(error);
-      return res.status(500).json({message : "Internal Server Error"});
+      return res.status(500).json({ message: "Internal Server Error" });
     }
   }
 }

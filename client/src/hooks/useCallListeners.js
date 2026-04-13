@@ -8,6 +8,7 @@ export const useCallListeners = (socket) => {
     iceCandidateQueue,
     setIceCandidateQueue,
     setCallState,
+    setCallActive
   } = useCall();
   useEffect(() => {
     if (!socket) return;
@@ -76,6 +77,7 @@ export const useCallListeners = (socket) => {
           ...prev,
           status: "in-call",
         }));
+        setCallActive(true);
       } catch (error) {
         console.log("Error While setting remote description", error);
       }
@@ -93,6 +95,7 @@ export const useCallListeners = (socket) => {
         peerConnectionRef.current.close();
         peerConnectionRef.current = null;
       }
+      setCallActive(false);
       setCallState({
         status: "idle",
         callType: null,
