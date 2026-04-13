@@ -25,7 +25,12 @@ export default function Sidebar({ contacts }) {
     <div className="space-y-1">
       {contacts.map((c) => {
         // Always find the other participant by ID, never by index
-        const other = c.participants?.find((p) => p._id !== user.id && p.username !== user.username);
+        const other = c.participants?.find(
+          (p) =>
+            p._id !== user._id &&
+            p._id !== user.id &&
+            p.username !== user.username,
+        );
         if (!other) return null;
 
         // Unread count for current user
@@ -41,9 +46,7 @@ export default function Sidebar({ contacts }) {
               navigate(`/chat/${c._id}`);
             }}
             className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-150 ${
-              isActive
-                ? "bg-[#161b22]"
-                : "hover:bg-[#2a2f3a]"
+              isActive ? "bg-[#161b22]" : "hover:bg-[#2a2f3a]"
             }`}
           >
             {/* Avatar with online indicator */}

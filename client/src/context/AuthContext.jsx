@@ -8,7 +8,6 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // On mount — restore session from httpOnly cookie, not localStorage
   useEffect(() => {
     axios
       .get(`${API}/api/user`, { withCredentials: true })

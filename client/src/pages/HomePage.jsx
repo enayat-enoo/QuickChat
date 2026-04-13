@@ -1,6 +1,6 @@
 import { MessageSquare, UserSearch } from "lucide-react";
 import axios from "axios";
-import { useRef, useState} from "react";
+import { useRef, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -22,16 +22,15 @@ export default function HomePage() {
   const { searchResults } = useSelector((state) => state.user);
   const chatList = useSelector((state) => state.chat?.chatList ?? []);
 
-
   // logout handler
   function logoutHandler() {
     axios
       .get(`${API}/api/logout`, { withCredentials: true })
       .then(() => {
         socket?.disconnect();
-        // Clear any stale localStorage data from previous versions
         localStorage.clear();
-        window.location.href = "/login";
+        setUser(null);
+        navigate("/login");
       })
       .catch((err) => {
         console.error(err);

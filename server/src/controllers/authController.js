@@ -83,6 +83,7 @@ async function login(req, res) {
       .json({
         message: "login successful",
         user: {
+          _id: findUser._id,
           id: findUser._id,
           username: findUser.username,
           name: findUser.name,

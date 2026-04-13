@@ -6,7 +6,7 @@ import { Provider } from "react-redux";
 import store from "./store.js";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { SocketProvider } from "./context/SocketContext.jsx";
-import { CallProvider } from "./context/CallContext.jsx";
+import  CallProvider  from "./context/CallContext.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";

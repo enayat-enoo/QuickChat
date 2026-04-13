@@ -7,9 +7,7 @@ import Bottom from "../components/Bottom";
 import Sidebar from "../components/Sidebar";
 import ChatLoader from "../components/ChatLoader";
 import { useAuth } from "../context/AuthContext";
-import {
-  updateChatList
-} from "../store/chatSlice";
+import { setActiveChat, updateChatList } from "../store/chatSlice";
 import { useDispatch } from "react-redux";
 import { useSocket } from "../context/SocketContext";
 import { useCall } from "../context/CallContext";
@@ -23,7 +21,7 @@ import {
 const API = import.meta.env.VITE_API_URL;
 export default function ChatPage() {
   const [message, setMessage] = useState("");
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const { socket } = useSocket();
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState([]);
@@ -41,9 +39,23 @@ export default function ChatPage() {
   const chatId = useParams().id;
   const dispatch = useDispatch();
 
+  // If page was refreshed, activeChat is gone from Redux
+  // Restore it from the chatList using the URL param
+  useEffect(() => {
+    if (!activeChat && chatId && chatList.length > 0) {
+      const match = chatList.find((c) => c._id === chatId);
+      if (match) {
+        dispatch(setActiveChat(match));
+      } else {
+        // chatId in URL doesn't match any chat — go home
+        navigate("/");
+      }
+    }
+  }, [chatId, activeChat, chatList, dispatch, navigate]);
+
   const otherParticipant = activeChat?.participants?.find(
-    (p) => p.username !== user.username,
-  );
+  (p) => p._id !== user._id && p._id !== user.id && p.username !== user.username
+);
 
   let statusText = "";
   if (otherParticipant) {
@@ -253,14 +265,13 @@ export default function ChatPage() {
     };
   }, [socket, activeChat]);
 
-
   function messageSender() {
     if (!message.trim()) return;
 
     // guard activeChat / receiverId
     const receiver = activeChat?.participants?.find(
-      (p) => p.username !== user.username,
-    );
+  (p) => p._id !== user._id && p._id !== user.id && p.username !== user.username
+);
     const receiverIdSafe = receiver ? receiver._id : null;
     const currentChatId = chatId || activeChat?._id;
 
@@ -316,16 +327,17 @@ export default function ChatPage() {
   }
 
   function logoutHandler() {
-    axios
-      .get(`${API}/api/logout`, { withCredentials: true })
-      .then(() => {
-        localStorage.clear();
-        navigate("/login");
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-  }
+  axios
+    .get(`${API}/api/logout`, { withCredentials: true })
+    .then(() => {
+      localStorage.clear();
+      setUser(null);
+      navigate("/login");
+    })
+    .catch((err) => {
+      console.error(err);
+    });
+}
 
   // Early return if no chat selected (prevents "cannot read properties of undefined")
   if (!activeChat) {
