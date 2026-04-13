@@ -40,6 +40,7 @@ const authLimiter = rateLimit({
 });
 
 //routes
+app.get("/",(req, res) => res.json({ message: "Server is running" }));
 app.use("/api", authRouter);
 app.use("/api/message", isAuthMiddleware, messageRouter);
 app.use("/api/user", isAuthMiddleware, userInfoRouter);
