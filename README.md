@@ -6,7 +6,8 @@ A full-stack real-time messaging platform built with the MERN stack, WebSockets,
 
 ---
 
-![QuickChat Screenshot](https://quick-chat-eight-eta.vercel.app/preview.png)
+![QuickChat Screenshot](./public/preview1.png)
+![QuickChat Screenshot](./public/preview2.png)
 
 ---
 
