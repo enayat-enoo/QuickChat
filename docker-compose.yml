@@ -1,0 +1,121 @@
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  QuickChat — Thesis Experiment: Scenario B (Distributed Cluster) ║
+# ║                                                                   ║
+# ║  Run Scenario B (Redis active, 2 nodes):                         ║
+# ║    docker compose up --build                                      ║
+# ║                                                                   ║
+# ║  Run Scenario A (monolith, no Redis):                            ║
+# ║    docker compose -f docker-compose.scenario-a.yml up --build    ║
+# ╚══════════════════════════════════════════════════════════════════╝
+
+services:
+
+  # ── Redis ────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7.2-alpine
+    container_name: quickchat_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - quickchat_net
+
+  # ── MongoDB ──────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:6.0
+    container_name: quickchat_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - quickchat_net
+
+  # ── Node instance 1 ──────────────────────────────────────────────────
+  node1:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: quickchat_node1
+    environment:
+      PORT: 8000
+      NODE_ID: "1"
+      SCENARIO: "B"
+      REDIS_URL: "redis://redis:6379"
+      DB_URL: "mongodb://mongo:27017/quickchat"
+      CLIENT_URL: "http://localhost:3000"
+      SECRET_KEY: ${SECRET_KEY}
+      SALT_ROUNDS: ${SALT_ROUNDS:-10}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+    volumes:
+      - ./metrics:/app/metrics   # CSV files land on your machine
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    networks:
+      - quickchat_net
+    restart: unless-stopped
+
+  # ── Node instance 2 ──────────────────────────────────────────────────
+  node2:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: quickchat_node2
+    environment:
+      PORT: 8000
+      NODE_ID: "2"
+      SCENARIO: "B"
+      REDIS_URL: "redis://redis:6379"
+      DB_URL: "mongodb://mongo:27017/quickchat"
+      CLIENT_URL: "http://localhost:3000"
+      SECRET_KEY: ${SECRET_KEY}
+      SALT_ROUNDS: ${SALT_ROUNDS:-10}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+    volumes:
+      - ./metrics:/app/metrics
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    networks:
+      - quickchat_net
+    restart: unless-stopped
+
+  # ── Nginx load balancer ──────────────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: quickchat_nginx
+    ports:
+      - "80:80"       # HTTP — Artillery and browser hit this
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - node1
+      - node2
+    networks:
+      - quickchat_net
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+
+networks:
+  quickchat_net:
+    driver: bridge

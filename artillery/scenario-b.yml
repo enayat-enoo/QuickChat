@@ -1,0 +1,45 @@
+# artillery/scenario-b.yml — Scenario B: Distributed cluster (Redis active)
+#
+# Run from QuickChat-main root:
+#   artillery run artillery/scenario-b.yml --output artillery/results/scenario-b.json
+
+config:
+  target: "http://localhost"
+  processor: "./artillery/processor.js"
+
+  phases:
+    - name: "Warm up (100 users)"
+      duration: 60
+      arrivalRate: 2
+      maxVusers: 100
+
+    - name: "Low load (500 users)"
+      duration: 60
+      arrivalRate: 8
+      maxVusers: 500
+
+    - name: "Medium load (1000 users)"
+      duration: 60
+      arrivalRate: 16
+      maxVusers: 1000
+
+    - name: "High load (2000 users)"
+      duration: 60
+      arrivalRate: 33
+      maxVusers: 2000
+
+    - name: "Peak load (5000 users)"
+      duration: 60
+      arrivalRate: 83
+      maxVusers: 5000
+
+  environments:
+    default:
+      variables:
+        MESSAGES_PER_USER: "5"
+        MESSAGE_INTERVAL_MS: "1000"
+
+scenarios:
+  - name: "WebSocket chat load test — Scenario B"
+    flow:
+      - function: "connectAndChat"

@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
 
 if (!process.env.SECRET_KEY) {
   throw new Error("FATAL: SECRET_KEY environment variable is not set.");

@@ -1,0 +1,76 @@
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  QuickChat — Thesis Experiment: Scenario A (Monolith Baseline)   ║
+# ║                                                                   ║
+# ║  Run with:                                                        ║
+# ║    docker compose -f docker-compose.scenario-a.yml up --build    ║
+# ╚══════════════════════════════════════════════════════════════════╝
+
+services:
+
+  # ── MongoDB ──────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:6.0
+    container_name: quickchat_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - quickchat_net
+
+  # ── Single Node instance — NO Redis ──────────────────────────────────
+  # REDIS_URL is intentionally empty.
+  # server.js catches the connection failure and runs without the adapter.
+  # This is the "Socket Silo" baseline: all sockets in one memory space,
+  # no cross-node delivery. adapter.serverCount = 1.
+  node1:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: quickchat_node1
+    environment:
+      PORT: 8000
+      NODE_ID: "1"
+      SCENARIO: "A"
+      REDIS_URL: ""          # Empty → Redis disabled → no adapter
+      DB_URL: "mongodb://mongo:27017/quickchat"
+      CLIENT_URL: "http://localhost:3000"
+      SECRET_KEY: ${SECRET_KEY}
+      SALT_ROUNDS: ${SALT_ROUNDS:-10}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+    volumes:
+      - ./metrics:/app/metrics
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - quickchat_net
+    restart: unless-stopped
+
+  # ── Nginx — passes all traffic to the single node ────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: quickchat_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.scenario-a.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - node1
+    networks:
+      - quickchat_net
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+
+networks:
+  quickchat_net:
+    driver: bridge

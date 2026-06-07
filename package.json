@@ -1,0 +1,16 @@
+{
+  "name": "quickchat-artillery",
+  "version": "1.0.0",
+  "description": "Artillery load tests for QuickChat thesis experiment",
+  "scripts": {
+    "seed": "node artillery/seed-users.js",
+    "test:a": "artillery run artillery/scenario-a.yml --output artillery/results/scenario-a.json",
+    "test:b": "artillery run artillery/scenario-b.yml --output artillery/results/scenario-b.json",
+    "report:a": "artillery report artillery/results/scenario-a.json --output artillery/results/scenario-a.html",
+    "report:b": "artillery report artillery/results/scenario-b.json --output artillery/results/scenario-b.html"
+  },
+  "dependencies": {
+    "artillery": "^2.0.0",
+    "socket.io-client": "^4.7.5"
+  }
+}

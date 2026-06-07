@@ -1,6 +1,11 @@
 const messageModel = require("../models/Message");
 const userModel = require("../models/User");
 const chatModel = require("../models/ChatModel");
+const { logMetric } = require("../utils/metricsLogger");
+
+// NODE_ID identifies which instance handled a message in the CSV.
+// Set via env (e.g. NODE_ID=1 in docker-compose) so it survives PM2 clustering.
+const NODE_ID = process.env.NODE_ID || process.pid.toString();
 
 async function messageSocket(io) {
   io.on("connection", async (socket) => {
@@ -19,13 +24,18 @@ async function messageSocket(io) {
       console.error("Error marking user online:", error);
     }
 
-    // Handle incoming message
-    socket.on("sendMessage", async ({ chatId, content, receiverId }) => {
+    // ─── Handle incoming message ────────────────────────────────────────────
+    socket.on("sendMessage", async ({ chatId, content, receiverId, clientSentAt }) => {
+      // ① Capture server receive time immediately — before any async work
+      const serverReceiveAt = Date.now();
+
       try {
         if (!chatId || !content?.trim() || !receiverId) return;
         if (content.length > 2000) return;
 
-        // Write to DB once
+        // ─── DB write ────────────────────────────────────────────────────────
+        const dbStart = Date.now();
+
         let message = await messageModel.create({
           sender: userId,
           receiver: receiverId,
@@ -35,23 +45,70 @@ async function messageSocket(io) {
 
         message = await message.populate("sender", "username avatar name");
 
+        const dbWriteMs = Date.now() - dbStart;
+
         // Update chat's lastMessage + increment receiver's unread count
-        await chatModel.findByIdAndUpdate(chatId, {
+        // Fire-and-forget — don't block message delivery on this
+        chatModel.findByIdAndUpdate(chatId, {
           lastMessage: message._id,
           updatedAt: Date.now(),
           $inc: { [`participantInfo.${receiverId}.unreadCount`]: 1 },
-        });
+        }).catch((err) => console.error("chatModel update error:", err));
 
-        // Emit to receiver
+        // ─── Redis emit ──────────────────────────────────────────────────────
+        const emitStart = Date.now();
+
+        // socket.to(receiverId) goes through the Redis adapter when running
+        // in cluster mode — this is the "Redis hop" we are measuring.
         socket.to(receiverId).emit("getMessage", message);
 
-        // Emit back to sender to confirm (replaces optimistic message with real DB record)
-        socket.emit("messageSent", message);
+        const redisEmitMs = Date.now() - emitStart;
+
+        // ─── Total server processing time ───────────────────────────────────
+        const totalServerMs = Date.now() - serverReceiveAt;
+
+        // ─── Cross-node detection ────────────────────────────────────────────
+        // io.of("/").adapter.serverCount > 1 means the Redis adapter is active
+        // and there are multiple nodes. We approximate crossNode as true
+        // whenever the adapter has >1 server (exact per-message routing
+        // is internal to the adapter, but this is accurate for thesis purposes).
+        const serverCount = io.of("/").adapter.serverCount ?? 1;
+        const crossNode = serverCount > 1;
+
+        // ─── Emit confirmation back to sender ───────────────────────────────
+        // Attach timing metadata so the client (and Artillery) can calculate
+        // end-to-end RTT:  clientReceivedAt - clientSentAt
+        socket.emit("messageSent", {
+          ...message.toObject(),
+          _timing: {
+            nodeId: NODE_ID,
+            serverReceiveAt,        // absolute ms — client uses this for RTT
+            clientSentAt: clientSentAt || null,  // echoed back for RTT calc
+            dbWriteMs,
+            redisEmitMs,
+            totalServerMs,
+            crossNode,
+          },
+        });
+
+        // ─── Write to CSV ────────────────────────────────────────────────────
+        logMetric({
+          messageId: message._id.toString(),
+          chatId,
+          serverReceiveMs: serverReceiveAt,
+          dbWriteMs,
+          redisEmitMs,
+          totalServerMs,
+          contentLength: content.trim().length,
+          crossNode,
+        });
+
       } catch (error) {
         console.error("sendMessage socket error:", error);
         socket.emit("messageError", { message: "Failed to send message" });
       }
     });
+
     // Reset unread count when user opens a chat
     socket.on("markRead", async ({ chatId }) => {
       try {

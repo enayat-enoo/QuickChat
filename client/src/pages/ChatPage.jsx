@@ -240,10 +240,22 @@ export default function ChatPage() {
 
     // Confirmation from server — replace our optimistic message with real DB record
     const handleSent = (message) => {
+      // Thesis instrumentation: log RTT when timing data is present
+      if (message._timing) {
+        const rtt = Date.now() - (message._timing.clientSentAt || Date.now());
+        console.debug("[thesis]", {
+          rttMs: rtt,
+          dbWriteMs: message._timing.dbWriteMs,
+          redisEmitMs: message._timing.redisEmitMs,
+          totalServerMs: message._timing.totalServerMs,
+          crossNode: message._timing.crossNode,
+          nodeId: message._timing.nodeId,
+        });
+      }
       setMessages((prev) =>
         prev.map((m) =>
-          // optimistic messages use Date.now() as _id — replace the last one
-          typeof m._id === "number" ? message : m,
+          // optimistic messages use numeric Date.now() as _id — replace the last one
+          typeof m._id === "number" || m._id === message._id ? message : m,
         ),
       );
     };
@@ -284,6 +296,7 @@ export default function ChatPage() {
       chatId: currentChatId,
       receiverId: receiverIdSafe,
       content: message,
+      clientSentAt: Date.now(), // thesis: echoed back in messageSent for RTT calc
     });
 
     async function loadOlderMessages() {
@@ -309,7 +322,7 @@ export default function ChatPage() {
 
     // Optimistic UI
     const optimisticMsg = {
-      _id: Date.now().toString(), // Temp ID to prevent key errors
+      _id: Date.now(), // Temp numeric ID — handleSent matches typeof === "number"
       sender: {
         _id: user._id,
         username: user.username,
@@ -400,23 +413,27 @@ export default function ChatPage() {
                   </svg>
                 </button>
 
-                <img
-                  src={getAvatar(
-                    otherParticipant.avatar,
-                    otherParticipant.name,
-                  )}
-                  className="w-9 h-9 md:w-10 md:h-10 rounded-full border border-gray-500 object-cover"
-                />
-                <div>
-                  <h3 className="text-white font-semibold text-sm md:text-base">
-                    {otherParticipant.name}
-                  </h3>
-                  <p
-                    className={`text-xs ${otherParticipant.isOnline ? "text-green-400" : "text-gray-500"}`}
-                  >
-                    {statusText}
-                  </p>
-                </div>
+                {otherParticipant && (
+                  <>
+                    <img
+                      src={getAvatar(
+                        otherParticipant.avatar,
+                        otherParticipant.name,
+                      )}
+                      className="w-9 h-9 md:w-10 md:h-10 rounded-full border border-gray-500 object-cover"
+                    />
+                    <div>
+                      <h3 className="text-white font-semibold text-sm md:text-base">
+                        {otherParticipant.name}
+                      </h3>
+                      <p
+                        className={`text-xs ${otherParticipant.isOnline ? "text-green-400" : "text-gray-500"}`}
+                      >
+                        {statusText}
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="flex items-center gap-4 md:gap-5 text-gray-300">

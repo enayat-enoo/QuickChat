@@ -1,0 +1,302 @@
+[
+  {
+    "email": "test0@quickchat.dev",
+    "username": "testuser0",
+    "password": "Test@1234",
+    "userId": "6a250b5bd99844754b27ef16"
+  },
+  {
+    "email": "test1@quickchat.dev",
+    "username": "testuser1",
+    "password": "Test@1234",
+    "userId": "6a250b5cd99844754b27ef1a"
+  },
+  {
+    "email": "test2@quickchat.dev",
+    "username": "testuser2",
+    "password": "Test@1234",
+    "userId": "6a250b5cd99844754b27ef1e"
+  },
+  {
+    "email": "test3@quickchat.dev",
+    "username": "testuser3",
+    "password": "Test@1234",
+    "userId": "6a250b5cd99844754b27ef22"
+  },
+  {
+    "email": "test4@quickchat.dev",
+    "username": "testuser4",
+    "password": "Test@1234",
+    "userId": "6a250b5dd99844754b27ef26"
+  },
+  {
+    "email": "test5@quickchat.dev",
+    "username": "testuser5",
+    "password": "Test@1234",
+    "userId": "6a250b5dd99844754b27ef2a"
+  },
+  {
+    "email": "test6@quickchat.dev",
+    "username": "testuser6",
+    "password": "Test@1234",
+    "userId": "6a250b5dd99844754b27ef2e"
+  },
+  {
+    "email": "test7@quickchat.dev",
+    "username": "testuser7",
+    "password": "Test@1234",
+    "userId": "6a250b5dd99844754b27ef32"
+  },
+  {
+    "email": "test8@quickchat.dev",
+    "username": "testuser8",
+    "password": "Test@1234",
+    "userId": "6a250b5ed99844754b27ef36"
+  },
+  {
+    "email": "test9@quickchat.dev",
+    "username": "testuser9",
+    "password": "Test@1234",
+    "userId": "6a250b5ed99844754b27ef3a"
+  },
+  {
+    "email": "test10@quickchat.dev",
+    "username": "testuser10",
+    "password": "Test@1234",
+    "userId": "6a250b5ed99844754b27ef3e"
+  },
+  {
+    "email": "test11@quickchat.dev",
+    "username": "testuser11",
+    "password": "Test@1234",
+    "userId": "6a250b5ed99844754b27ef42"
+  },
+  {
+    "email": "test12@quickchat.dev",
+    "username": "testuser12",
+    "password": "Test@1234",
+    "userId": "6a250b5ed99844754b27ef46"
+  },
+  {
+    "email": "test13@quickchat.dev",
+    "username": "testuser13",
+    "password": "Test@1234",
+    "userId": "6a250b5fd99844754b27ef4a"
+  },
+  {
+    "email": "test14@quickchat.dev",
+    "username": "testuser14",
+    "password": "Test@1234",
+    "userId": "6a250b5fd99844754b27ef4e"
+  },
+  {
+    "email": "test15@quickchat.dev",
+    "username": "testuser15",
+    "password": "Test@1234",
+    "userId": "6a250b5fd99844754b27ef52"
+  },
+  {
+    "email": "test16@quickchat.dev",
+    "username": "testuser16",
+    "password": "Test@1234",
+    "userId": "6a250b5fd99844754b27ef56"
+  },
+  {
+    "email": "test17@quickchat.dev",
+    "username": "testuser17",
+    "password": "Test@1234",
+    "userId": "6a250b60d99844754b27ef5a"
+  },
+  {
+    "email": "test18@quickchat.dev",
+    "username": "testuser18",
+    "password": "Test@1234",
+    "userId": "6a250b60d99844754b27ef5e"
+  },
+  {
+    "email": "test19@quickchat.dev",
+    "username": "testuser19",
+    "password": "Test@1234",
+    "userId": "6a250b60d99844754b27ef62"
+  },
+  {
+    "email": "test20@quickchat.dev",
+    "username": "testuser20",
+    "password": "Test@1234",
+    "userId": "6a250b60d99844754b27ef66"
+  },
+  {
+    "email": "test21@quickchat.dev",
+    "username": "testuser21",
+    "password": "Test@1234",
+    "userId": "6a250b60d99844754b27ef6a"
+  },
+  {
+    "email": "test22@quickchat.dev",
+    "username": "testuser22",
+    "password": "Test@1234",
+    "userId": "6a250b61d99844754b27ef6e"
+  },
+  {
+    "email": "test23@quickchat.dev",
+    "username": "testuser23",
+    "password": "Test@1234",
+    "userId": "6a250b61d99844754b27ef72"
+  },
+  {
+    "email": "test24@quickchat.dev",
+    "username": "testuser24",
+    "password": "Test@1234",
+    "userId": "6a250b61d99844754b27ef76"
+  },
+  {
+    "email": "test25@quickchat.dev",
+    "username": "testuser25",
+    "password": "Test@1234",
+    "userId": "6a250b61d99844754b27ef7a"
+  },
+  {
+    "email": "test26@quickchat.dev",
+    "username": "testuser26",
+    "password": "Test@1234",
+    "userId": "6a250b62d99844754b27ef7e"
+  },
+  {
+    "email": "test27@quickchat.dev",
+    "username": "testuser27",
+    "password": "Test@1234",
+    "userId": "6a250b62d99844754b27ef82"
+  },
+  {
+    "email": "test28@quickchat.dev",
+    "username": "testuser28",
+    "password": "Test@1234",
+    "userId": "6a250b62d99844754b27ef86"
+  },
+  {
+    "email": "test29@quickchat.dev",
+    "username": "testuser29",
+    "password": "Test@1234",
+    "userId": "6a250b62d99844754b27ef8a"
+  },
+  {
+    "email": "test30@quickchat.dev",
+    "username": "testuser30",
+    "password": "Test@1234",
+    "userId": "6a250b62d99844754b27ef8e"
+  },
+  {
+    "email": "test31@quickchat.dev",
+    "username": "testuser31",
+    "password": "Test@1234",
+    "userId": "6a250b62d99844754b27ef92"
+  },
+  {
+    "email": "test32@quickchat.dev",
+    "username": "testuser32",
+    "password": "Test@1234",
+    "userId": "6a250b63d99844754b27ef96"
+  },
+  {
+    "email": "test33@quickchat.dev",
+    "username": "testuser33",
+    "password": "Test@1234",
+    "userId": "6a250b63d99844754b27ef9a"
+  },
+  {
+    "email": "test34@quickchat.dev",
+    "username": "testuser34",
+    "password": "Test@1234",
+    "userId": "6a250b63d99844754b27ef9e"
+  },
+  {
+    "email": "test35@quickchat.dev",
+    "username": "testuser35",
+    "password": "Test@1234",
+    "userId": "6a250b63d99844754b27efa2"
+  },
+  {
+    "email": "test36@quickchat.dev",
+    "username": "testuser36",
+    "password": "Test@1234",
+    "userId": "6a250b63d99844754b27efa6"
+  },
+  {
+    "email": "test37@quickchat.dev",
+    "username": "testuser37",
+    "password": "Test@1234",
+    "userId": "6a250b63d99844754b27efaa"
+  },
+  {
+    "email": "test38@quickchat.dev",
+    "username": "testuser38",
+    "password": "Test@1234",
+    "userId": "6a250b63d99844754b27efae"
+  },
+  {
+    "email": "test39@quickchat.dev",
+    "username": "testuser39",
+    "password": "Test@1234",
+    "userId": "6a250b64d99844754b27efb2"
+  },
+  {
+    "email": "test40@quickchat.dev",
+    "username": "testuser40",
+    "password": "Test@1234",
+    "userId": "6a250b64d99844754b27efb6"
+  },
+  {
+    "email": "test41@quickchat.dev",
+    "username": "testuser41",
+    "password": "Test@1234",
+    "userId": "6a250b64d99844754b27efba"
+  },
+  {
+    "email": "test42@quickchat.dev",
+    "username": "testuser42",
+    "password": "Test@1234",
+    "userId": "6a250b64d99844754b27efbe"
+  },
+  {
+    "email": "test43@quickchat.dev",
+    "username": "testuser43",
+    "password": "Test@1234",
+    "userId": "6a250b64d99844754b27efc2"
+  },
+  {
+    "email": "test44@quickchat.dev",
+    "username": "testuser44",
+    "password": "Test@1234",
+    "userId": "6a250b64d99844754b27efc6"
+  },
+  {
+    "email": "test45@quickchat.dev",
+    "username": "testuser45",
+    "password": "Test@1234",
+    "userId": "6a250b64d99844754b27efca"
+  },
+  {
+    "email": "test46@quickchat.dev",
+    "username": "testuser46",
+    "password": "Test@1234",
+    "userId": "6a250b64d99844754b27efce"
+  },
+  {
+    "email": "test47@quickchat.dev",
+    "username": "testuser47",
+    "password": "Test@1234",
+    "userId": "6a250b64d99844754b27efd2"
+  },
+  {
+    "email": "test48@quickchat.dev",
+    "username": "testuser48",
+    "password": "Test@1234",
+    "userId": "6a250b65d99844754b27efd6"
+  },
+  {
+    "email": "test49@quickchat.dev",
+    "username": "testuser49",
+    "password": "Test@1234",
+    "userId": "6a250b65d99844754b27efda"
+  }
+]

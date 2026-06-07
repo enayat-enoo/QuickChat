@@ -6,6 +6,7 @@ const { Server } = require("socket.io");
 const { createAdapter } = require("@socket.io/redis-adapter");
 const { connectRedis } = require("./src/config/redis");
 const socketAuthMiddleware = require("./src/middleware/socketAuthMiddleware");
+require('dotenv').config();
 
 const server = createServer(app);
 const PORT = process.env.PORT || 8000;
