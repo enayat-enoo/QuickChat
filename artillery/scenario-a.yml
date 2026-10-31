@@ -5,8 +5,8 @@
 #   artillery run artillery/scenario-a.yml --output artillery/results/scenario-a.json
 
 config:
-  target: "http://localhost"
-  processor: "./artillery/processor.js"
+  target: "http://127.0.0.1:8000"
+  processor: "./processor.js"
 
   phases:
     - name: "Warm up (100 users)"

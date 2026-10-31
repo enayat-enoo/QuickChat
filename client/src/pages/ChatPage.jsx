@@ -19,6 +19,7 @@ import {
 } from "../utils/timeHelper";
 
 const API = import.meta.env.VITE_API_URL;
+
 export default function ChatPage() {
   const [message, setMessage] = useState("");
   const { user, setUser } = useAuth();
@@ -32,12 +33,21 @@ export default function ChatPage() {
     useCall();
 
   const messageEndRef = useRef(null);
+  // Track the last message id so we only auto-scroll when a NEW message
+  // arrives (send/receive), not when older messages are prepended.
+  const prevLastRef = useRef(null);
 
   const chatList = useSelector((state) => state.chat?.chatList ?? []);
   const activeChat = useSelector((state) => state.chat.activeChat);
   const navigate = useNavigate();
   const chatId = useParams().id;
   const dispatch = useDispatch();
+
+  // Single source of truth for "the other person" in this 1:1 chat.
+  const otherParticipant = activeChat?.participants?.find(
+    (p) =>
+      p._id !== user._id && p._id !== user.id && p.username !== user.username,
+  );
 
   // If page was refreshed, activeChat is gone from Redux
   // Restore it from the chatList using the URL param
@@ -47,15 +57,10 @@ export default function ChatPage() {
       if (match) {
         dispatch(setActiveChat(match));
       } else {
-        // chatId in URL doesn't match any chat — go home
         navigate("/");
       }
     }
   }, [chatId, activeChat, chatList, dispatch, navigate]);
-
-  const otherParticipant = activeChat?.participants?.find(
-  (p) => p._id !== user._id && p._id !== user.id && p.username !== user.username
-);
 
   let statusText = "";
   if (otherParticipant) {
@@ -81,11 +86,7 @@ export default function ChatPage() {
     }
 
     peerConnectionRef.current = new RTCPeerConnection({
-      iceServers: [
-        {
-          urls: "stun:stun.l.google.com:19302",
-        },
-      ],
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
 
     const pc = peerConnectionRef.current;
@@ -132,6 +133,7 @@ export default function ChatPage() {
       console.log(error);
     }
   }
+
   async function startVoiceCall() {
     let stream;
     try {
@@ -143,11 +145,7 @@ export default function ChatPage() {
     }
 
     peerConnectionRef.current = new RTCPeerConnection({
-      iceServers: [
-        {
-          urls: "stun:stun.l.google.com:19302",
-        },
-      ],
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
 
     const pc = peerConnectionRef.current;
@@ -159,6 +157,11 @@ export default function ChatPage() {
           candidate: event.candidate,
         });
       }
+    };
+
+    // FIX: voice calls previously never wired remote audio into the UI.
+    pc.ontrack = (event) => {
+      setRemoteStream(event.streams[0]);
     };
 
     stream.getAudioTracks().forEach((track) => {
@@ -192,6 +195,11 @@ export default function ChatPage() {
     }
   }
 
+  // Initial fetch for the active chat.
+  // - markRead fires only AFTER a successful fetch (so a failed fetch
+  //   doesn't silently clear the badge).
+  // - socket is in deps so markRead is retried if the socket connects late.
+  // - 403 → we lost access, go home.
   useEffect(() => {
     if (!activeChat) {
       setMessages([]);
@@ -202,8 +210,6 @@ export default function ChatPage() {
     setHasMore(false);
     setCursor(null);
 
-    socket?.emit("markRead", { chatId: activeChat._id });
-
     axios
       .get(`${API}/api/message/getmessage?chatId=${activeChat._id}`, {
         withCredentials: true,
@@ -213,56 +219,93 @@ export default function ChatPage() {
         setHasMore(res.data.hasMore);
         setCursor(res.data.nextCursor);
         setLoading(false);
+        socket?.emit("markRead", { chatId: activeChat._id });
       })
       .catch((err) => {
         console.error(err);
         setLoading(false);
+        if (err.response?.status === 403) {
+          navigate("/");
+        }
       });
 
     return () => {
       setMessages([]);
+      prevLastRef.current = null;
     };
-  }, [activeChat?._id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeChat?._id, socket]);
 
+  // Auto-scroll only when the LAST message changes — not when older
+  // messages are prepended by loadOlderMessages.
   useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const last = messages[messages.length - 1];
+    if (!last) return;
+    if (prevLastRef.current !== last._id) {
+      prevLastRef.current = last._id;
+      messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
+
+  // Load one page of older messages and prepend to the top.
+  // Moved out of messageSender — it was previously declared inside it
+  // and was out of scope at the JSX call site (ReferenceError past 50 msgs).
+  async function loadOlderMessages() {
+    if (!cursor || loadingMore || !activeChat) return;
+    setLoadingMore(true);
+    try {
+      const res = await axios.get(
+        `${API}/api/message/getmessage?chatId=${activeChat._id}&cursor=${cursor}`,
+        { withCredentials: true },
+      );
+      setMessages((prev) => [...res.data.data, ...prev]);
+      setHasMore(res.data.hasMore);
+      setCursor(res.data.nextCursor);
+    } catch (err) {
+      console.error(err);
+      if (err.response?.status === 403) navigate("/");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   useEffect(() => {
     if (!socket) return;
 
     // Message from the other person
-    const handleIncoming = (message) => {
-      if (activeChat && message.chatId === activeChat._id) {
-        setMessages((prev) => [...prev, message]);
+    const handleIncoming = (incoming) => {
+      if (activeChat && incoming.chatId === activeChat._id) {
+        setMessages((prev) => [...prev, incoming]);
       }
     };
 
-    // Confirmation from server — replace our optimistic message with real DB record
-    const handleSent = (message) => {
-      // Thesis instrumentation: log RTT when timing data is present
-      if (message._timing) {
-        const rtt = Date.now() - (message._timing.clientSentAt || Date.now());
+    // Confirmation from server — replace our optimistic message.
+    // Matches on clientId (echoed by the server) so two rapid sends
+    // can't swap/duplicate each other.
+    const handleSent = (incoming) => {
+      if (incoming._timing) {
+        const rtt = Date.now() - (incoming._timing.clientSentAt || Date.now());
         console.debug("[thesis]", {
           rttMs: rtt,
-          dbWriteMs: message._timing.dbWriteMs,
-          redisEmitMs: message._timing.redisEmitMs,
-          totalServerMs: message._timing.totalServerMs,
-          crossNode: message._timing.crossNode,
-          nodeId: message._timing.nodeId,
+          dbWriteMs: incoming._timing.dbWriteMs,
+          redisEmitMs: incoming._timing.redisEmitMs,
+          totalServerMs: incoming._timing.totalServerMs,
+          crossNode: incoming._timing.crossNode,
+          nodeId: incoming._timing.nodeId,
         });
       }
       setMessages((prev) =>
         prev.map((m) =>
-          // optimistic messages use numeric Date.now() as _id — replace the last one
-          typeof m._id === "number" || m._id === message._id ? message : m,
+          m.clientId && m.clientId === incoming.clientId ? incoming : m,
         ),
       );
     };
 
-    const handleError = ({ message: errMsg }) => {
-      // Remove the optimistic message if send failed
-      setMessages((prev) => prev.filter((m) => typeof m._id !== "number"));
+    // Remove only the failed optimistic message (matched by clientId).
+    const handleError = ({ clientId, message: errMsg }) => {
+      setMessages((prev) =>
+        prev.filter((m) => !(m.clientId && m.clientId === clientId)),
+      );
       console.error("Message send failed:", errMsg);
     };
 
@@ -280,10 +323,10 @@ export default function ChatPage() {
   function messageSender() {
     if (!message.trim()) return;
 
-    // guard activeChat / receiverId
     const receiver = activeChat?.participants?.find(
-  (p) => p._id !== user._id && p._id !== user.id && p.username !== user.username
-);
+      (p) =>
+        p._id !== user._id && p._id !== user.id && p.username !== user.username,
+    );
     const receiverIdSafe = receiver ? receiver._id : null;
     const currentChatId = chatId || activeChat?._id;
 
@@ -292,37 +335,25 @@ export default function ChatPage() {
       return;
     }
 
+    // Unique client id — echoed back by the server so we can match the
+    // confirmation to exactly this optimistic message (not "the first one").
+    const clientId =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
     socket.emit("sendMessage", {
       chatId: currentChatId,
       receiverId: receiverIdSafe,
       content: message,
-      clientSentAt: Date.now(), // thesis: echoed back in messageSent for RTT calc
+      clientSentAt: Date.now(),
+      clientId,
     });
-
-    async function loadOlderMessages() {
-      if (!cursor || loadingMore) return;
-      setLoadingMore(true);
-
-      try {
-        const res = await axios.get(
-          `${API}/api/message/getmessage?chatId=${activeChat._id}&cursor=${cursor}`,
-          { withCredentials: true },
-        );
-
-        // Prepend older messages to the top
-        setMessages((prev) => [...res.data.data, ...prev]);
-        setHasMore(res.data.hasMore);
-        setCursor(res.data.nextCursor);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoadingMore(false);
-      }
-    }
 
     // Optimistic UI
     const optimisticMsg = {
-      _id: Date.now(), // Temp numeric ID — handleSent matches typeof === "number"
+      _id: `optimistic-${clientId}`, // string id, never collides with ObjectId
+      clientId,
       sender: {
         _id: user._id,
         username: user.username,
@@ -340,23 +371,22 @@ export default function ChatPage() {
   }
 
   function logoutHandler() {
-  axios
-    .get(`${API}/api/logout`, { withCredentials: true })
-    .then(() => {
-      localStorage.clear();
-      setUser(null);
-      navigate("/login");
-    })
-    .catch((err) => {
-      console.error(err);
-    });
-}
-
-  // Early return if no chat selected (prevents "cannot read properties of undefined")
-  if (!activeChat) {
-    navigate("/");
-    return null;
+    axios
+      .get(`${API}/api/logout`, { withCredentials: true })
+      .then(() => {
+        localStorage.clear();
+        setUser(null);
+        navigate("/login");
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   }
+
+  // Early return if no chat selected.
+  // Navigation is handled by the effect above — calling navigate() during
+  // render is a React anti-pattern.
+  if (!activeChat) return null;
 
   return (
     <div className="min-h-screen w-full bg-[#0d1117] flex items-center justify-center font-sans px-2 md:px-0">
@@ -427,7 +457,11 @@ export default function ChatPage() {
                         {otherParticipant.name}
                       </h3>
                       <p
-                        className={`text-xs ${otherParticipant.isOnline ? "text-green-400" : "text-gray-500"}`}
+                        className={`text-xs ${
+                          otherParticipant.isOnline
+                            ? "text-green-400"
+                            : "text-gray-500"
+                        }`}
                       >
                         {statusText}
                       </p>
@@ -464,14 +498,12 @@ export default function ChatPage() {
                   msg.sender._id === user._id ||
                   msg.sender.username === user.username;
 
-                // Show date separator when the day changes between messages
                 const showDateSeparator =
                   index === 0 ||
                   isDifferentDay(messages[index - 1].createdAt, msg.createdAt);
 
                 return (
                   <div key={msg._id}>
-                    {/* Date separator — e.g. "Today", "Yesterday", "12 Jan 2024" */}
                     {showDateSeparator && (
                       <div className="flex items-center justify-center my-3">
                         <span className="text-xs text-gray-500 bg-[#20262e] px-3 py-1 rounded-full">
@@ -480,7 +512,6 @@ export default function ChatPage() {
                       </div>
                     )}
 
-                    {/* Message bubble */}
                     <div
                       className={`flex ${isMine ? "justify-end" : "justify-start"}`}
                     >
@@ -491,10 +522,8 @@ export default function ChatPage() {
                             : "bg-[#20262e] text-gray-200"
                         }`}
                       >
-                        {/* Message content */}
                         <p>{msg.content}</p>
 
-                        {/* Timestamp */}
                         <p
                           className={`text-[10px] mt-1 text-right ${
                             isMine ? "text-purple-300" : "text-gray-500"

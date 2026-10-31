@@ -1,6 +1,7 @@
 const messageModel = require("../models/Message");
 const userModel = require("../models/User");
 const chatModel = require("../models/ChatModel");
+const { assertParticipant } = require("../utils/assertParticipant");
 
 //send message handler
 // Kept as a stub — actual message sending happens via socket
@@ -13,32 +14,43 @@ async function sendMessage(req, res) {
 
 //retrive message handler
 async function getMessage(req, res) {
-  const { chatId, cursor, limit = 50 } = req.query;
+  const { chatId, cursor } = req.query;
 
   if (!chatId) {
     return res.status(400).json({ message: "chatId is required" });
   }
 
+  // Validate + clamp limit
+  let limit = Number(req.query.limit ?? 50);
+  if (!Number.isFinite(limit) || limit < 1) limit = 50;
+  if (limit > 100) limit = 100;
+
   try {
+    // 🔒 Authorization: caller must belong to the chat
+    await assertParticipant(chatId, req.user.id);
+
     const query = { chatId };
 
     // If cursor exists, only fetch messages older than that message's timestamp
     if (cursor) {
-      query.createdAt = { $lt: new Date(cursor) };
+      const cursorDate = new Date(cursor);
+      if (Number.isNaN(cursorDate.getTime())) {
+        return res.status(400).json({ message: "invalid cursor" });
+      }
+      query.createdAt = { $lt: cursorDate };
     }
 
+    // Fetch one extra to know if there is another page
     const messages = await messageModel
       .find(query)
       .populate("sender", "name username avatar")
       .populate("receiver", "name username avatar")
       .sort({ createdAt: -1 }) // newest first
-      .limit(Number(limit));
+      .limit(limit + 1);
 
-    // Reverse so oldest-first order is restored for the UI
-    const ordered = messages.reverse();
-
-    // Tell client if there are more messages to load above
-    const hasMore = messages.length === Number(limit);
+    const hasMore = messages.length > limit;
+    const page = hasMore ? messages.slice(0, limit) : messages;
+    const ordered = page.reverse(); // restore oldest-first for the UI
 
     return res.status(200).json({
       message: "messages fetched successfully",
@@ -48,6 +60,9 @@ async function getMessage(req, res) {
       nextCursor: ordered.length > 0 ? ordered[0].createdAt : null,
     });
   } catch (error) {
+    if (error.status === 403) {
+      return res.status(403).json({ message: "Access denied" });
+    }
     console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });
   }

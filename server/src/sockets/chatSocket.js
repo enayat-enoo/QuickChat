@@ -2,6 +2,7 @@ const messageModel = require("../models/Message");
 const userModel = require("../models/User");
 const chatModel = require("../models/ChatModel");
 const { logMetric } = require("../utils/metricsLogger");
+const { assertParticipant } = require("../utils/assertParticipant");
 
 // NODE_ID identifies which instance handled a message in the CSV.
 // Set via env (e.g. NODE_ID=1 in docker-compose) so it survives PM2 clustering.
@@ -33,12 +34,23 @@ async function messageSocket(io) {
         if (!chatId || !content?.trim() || !receiverId) return;
         if (content.length > 2000) return;
 
+        //Authorization: sender must belong to the chat.
+        // Also derive the receiver from chat.participants — never trust client.
+        const chat = await assertParticipant(chatId, userId);
+        const otherParticipant = chat.participants.find(
+          (p) => p.toString() !== userId.toString(),
+        );
+        if (!otherParticipant || otherParticipant.toString() !== receiverId.toString()) {
+          socket.emit("messageError", { message: "Invalid receiver for this chat" });
+          return;
+        }
+
         // ─── DB write ────────────────────────────────────────────────────────
         const dbStart = Date.now();
 
         let message = await messageModel.create({
           sender: userId,
-          receiver: receiverId,
+          receiver: otherParticipant,
           content: content.trim(),
           chatId,
         });
@@ -52,7 +64,7 @@ async function messageSocket(io) {
         chatModel.findByIdAndUpdate(chatId, {
           lastMessage: message._id,
           updatedAt: Date.now(),
-          $inc: { [`participantInfo.${receiverId}.unreadCount`]: 1 },
+          $inc: { [`participantInfo.${otherParticipant}.unreadCount`]: 1 },
         }).catch((err) => console.error("chatModel update error:", err));
 
         // ─── Redis emit ──────────────────────────────────────────────────────
@@ -60,7 +72,7 @@ async function messageSocket(io) {
 
         // socket.to(receiverId) goes through the Redis adapter when running
         // in cluster mode — this is the "Redis hop" we are measuring.
-        socket.to(receiverId).emit("getMessage", message);
+        socket.to(otherParticipant.toString()).emit("getMessage", message);
 
         const redisEmitMs = Date.now() - emitStart;
 
@@ -68,22 +80,16 @@ async function messageSocket(io) {
         const totalServerMs = Date.now() - serverReceiveAt;
 
         // ─── Cross-node detection ────────────────────────────────────────────
-        // io.of("/").adapter.serverCount > 1 means the Redis adapter is active
-        // and there are multiple nodes. We approximate crossNode as true
-        // whenever the adapter has >1 server (exact per-message routing
-        // is internal to the adapter, but this is accurate for thesis purposes).
         const serverCount = io.of("/").adapter.serverCount ?? 1;
         const crossNode = serverCount > 1;
 
         // ─── Emit confirmation back to sender ───────────────────────────────
-        // Attach timing metadata so the client (and Artillery) can calculate
-        // end-to-end RTT:  clientReceivedAt - clientSentAt
         socket.emit("messageSent", {
           ...message.toObject(),
           _timing: {
             nodeId: NODE_ID,
-            serverReceiveAt,        // absolute ms — client uses this for RTT
-            clientSentAt: clientSentAt || null,  // echoed back for RTT calc
+            serverReceiveAt,
+            clientSentAt: clientSentAt || null,
             dbWriteMs,
             redisEmitMs,
             totalServerMs,
@@ -92,17 +98,22 @@ async function messageSocket(io) {
         });
 
         // ─── Write to CSV ────────────────────────────────────────────────────
-        logMetric({
-          messageId: message._id.toString(),
-          chatId,
-          serverReceiveMs: serverReceiveAt,
-          dbWriteMs,
-          redisEmitMs,
-          totalServerMs,
-          contentLength: content.trim().length,
-          crossNode,
-        });
-
+        // Kept outside the delivery path: a CSV failure must not report
+        // "send failed" for a message that was already delivered.
+        try {
+          logMetric({
+            messageId: message._id.toString(),
+            chatId,
+            serverReceiveMs: serverReceiveAt,
+            dbWriteMs,
+            redisEmitMs,
+            totalServerMs,
+            contentLength: content.trim().length,
+            crossNode,
+          });
+        } catch (metricErr) {
+          console.error("logMetric failed:", metricErr);
+        }
       } catch (error) {
         console.error("sendMessage socket error:", error);
         socket.emit("messageError", { message: "Failed to send message" });
@@ -112,6 +123,9 @@ async function messageSocket(io) {
     // Reset unread count when user opens a chat
     socket.on("markRead", async ({ chatId }) => {
       try {
+        if (!chatId) return;
+        // 🔒 Authorization: caller must belong to the chat
+        await assertParticipant(chatId, userId);
         await chatModel.findByIdAndUpdate(chatId, {
           $set: { [`participantInfo.${userId}.unreadCount`]: 0 },
         });
@@ -122,10 +136,12 @@ async function messageSocket(io) {
 
     // Handle disconnect
     socket.on("disconnect", async () => {
-      setTimeout(async () => {
+      const timer = setTimeout(async () => {
         try {
-          const sockets = await io.fetchSockets();
-          const stillConnected = sockets.some((s) => s.user?.id === userId);
+          // Scoped to this user's room — adapter-native, far cheaper than
+          // enumerating every socket on every node.
+          const sockets = await io.in(userId).fetchSockets();
+          const stillConnected = sockets.length > 0;
 
           if (!stillConnected) {
             const updatedUser = await userModel.findByIdAndUpdate(
@@ -142,6 +158,7 @@ async function messageSocket(io) {
           console.error("Error marking user offline:", error);
         }
       }, 3000);
+      if (timer.unref) timer.unref();
     });
   });
 }

@@ -21,10 +21,11 @@ export default function Sidebar({ contacts }) {
     );
   }
 
+  const myId = String(user?._id ?? user?.id ?? "");
+
   return (
     <div className="space-y-1">
       {contacts.map((c) => {
-        // Always find the other participant by ID, never by index
         const other = c.participants?.find(
           (p) =>
             p._id !== user._id &&
@@ -33,8 +34,8 @@ export default function Sidebar({ contacts }) {
         );
         if (!other) return null;
 
-        // Unread count for current user
-        const unread = c.participantInfo?.[user.id]?.unreadCount || 0;
+        // 🔑 participantInfo keys are stringified ObjectIds
+        const unread = c.participantInfo?.[myId]?.unreadCount || 0;
 
         const isActive = activeChat?._id === c._id;
 
@@ -42,14 +43,13 @@ export default function Sidebar({ contacts }) {
           <div
             key={c._id}
             onClick={() => {
-              dispatch(setActiveChat(c));
+              dispatch(setActiveChat({ chat: c, userId: myId }));
               navigate(`/chat/${c._id}`);
             }}
             className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-150 ${
               isActive ? "bg-[#161b22]" : "hover:bg-[#2a2f3a]"
             }`}
           >
-            {/* Avatar with online indicator */}
             <div className="relative flex-shrink-0">
               <img
                 src={getAvatar(other.avatar, other.name)}
@@ -61,7 +61,6 @@ export default function Sidebar({ contacts }) {
               )}
             </div>
 
-            {/* Name + last message */}
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-center">
                 <p className="text-sm font-medium text-gray-200 truncate">

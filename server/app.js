@@ -1,15 +1,19 @@
+require("dotenv").config();
+
 const express = require("express");
-const app = express();
-const authRouter = require("./src/routes/authRoutes");
-const messageRouter = require("./src/routes/messageRoutes");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const connectToDb = require("./src/config/db");
-const userInfoRouter = require("./src/routes/userInfoRoutes");
-const isAuthMiddleware = require("./src/middleware/authMiddleware");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-require("dotenv").config();
+const mongoose = require("mongoose");
+
+const authRouter = require("./src/routes/authRoutes");
+const messageRouter = require("./src/routes/messageRoutes");
+const userInfoRouter = require("./src/routes/userInfoRoutes");
+const isAuthMiddleware = require("./src/middleware/authMiddleware");
+const connectToDb = require("./src/config/db");
+
+const app = express();
 
 const url = process.env.DB_URL;
 
@@ -20,7 +24,7 @@ connectToDb(url)
     process.exit(1);
   });
 
-//middlewares
+// ─── Middleware ─────────────────────────────────────────────────────────────
 app.use(helmet());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
@@ -31,17 +35,22 @@ app.use(
     credentials: true,
   }),
 );
+
+// ─── Rate limiter (auth only) ──────────────────────────────────────────────
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minute
-  max: 10, // limit each IP to 10 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 10,
   message: { message: "Too many attempts, please try again after 15 minutes." },
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
-//routes
-app.get("/",(req, res) => res.json({ message: "Server is running" }));
+// ─── Routes ────────────────────────────────────────────────────────────────
+app.get("/", (req, res) => res.json({ message: "Server is running" }));
+
+// 🔒 Rate-limited auth routes
 app.use("/api", authRouter);
+
 app.use("/api/message", isAuthMiddleware, messageRouter);
 app.use("/api/user", isAuthMiddleware, userInfoRouter);
 
@@ -55,9 +64,7 @@ app.get("/api/health", async (req, res) => {
     uptime: Math.floor(process.uptime()) + "s",
     redis: redisClient?.status === "ready" ? "connected" : "disconnected",
     database:
-      require("mongoose").connection.readyState === 1
-        ? "connected"
-        : "disconnected",
+      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
   };
 
   const statusCode =
@@ -65,10 +72,17 @@ app.get("/api/health", async (req, res) => {
   return res.status(statusCode).json(health);
 });
 
-//Global Error Handler
+app.use((req, res) => {
+  res.status(404).json({ message: "Not found" });
+});
+
+
 app.use((err, req, res, next) => {
-  console.log(err);
-  res.status(500).json({ error: "Something went wrong" });
+  console.error(err);
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
+    message: status === 500 ? "Something went wrong" : err.message,
+  });
 });
 
 module.exports = app;

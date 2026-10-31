@@ -7,7 +7,6 @@
 
 services:
 
-  # ── MongoDB ──────────────────────────────────────────────────────────
   mongo:
     image: mongo:6.0
     container_name: quickchat_mongo
@@ -23,21 +22,18 @@ services:
     networks:
       - quickchat_net
 
-  # ── Single Node instance — NO Redis ──────────────────────────────────
-  # REDIS_URL is intentionally empty.
-  # server.js catches the connection failure and runs without the adapter.
-  # This is the "Socket Silo" baseline: all sockets in one memory space,
-  # no cross-node delivery. adapter.serverCount = 1.
   node1:
     build:
       context: ./server
       dockerfile: Dockerfile
     container_name: quickchat_node1
+    ports:
+      - "8000:8000"
     environment:
       PORT: 8000
       NODE_ID: "1"
       SCENARIO: "A"
-      REDIS_URL: ""          # Empty → Redis disabled → no adapter
+      REDIS_URL: ""
       DB_URL: "mongodb://mongo:27017/quickchat"
       CLIENT_URL: "http://localhost:3000"
       SECRET_KEY: ${SECRET_KEY}
@@ -50,20 +46,6 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
-    networks:
-      - quickchat_net
-    restart: unless-stopped
-
-  # ── Nginx — passes all traffic to the single node ────────────────────
-  nginx:
-    image: nginx:1.25-alpine
-    container_name: quickchat_nginx
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.scenario-a.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - node1
     networks:
       - quickchat_net
     restart: unless-stopped

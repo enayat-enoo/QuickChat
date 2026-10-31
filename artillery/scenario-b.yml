@@ -5,7 +5,7 @@
 
 config:
   target: "http://localhost"
-  processor: "./artillery/processor.js"
+  processor: "./processor.js"
 
   phases:
     - name: "Warm up (100 users)"

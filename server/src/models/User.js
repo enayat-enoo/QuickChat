@@ -27,6 +27,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 6,
+      select: false, // 🔒 never returned by default; opt in with .select("+password")
     },
     avatar: {
       type: String,
@@ -65,6 +66,6 @@ const userSchema = new mongoose.Schema(
 
 userSchema.index({ isOnline: 1 });
 
-const userModel = mongoose.model('userModel',userSchema);
+const userModel = mongoose.model("userModel", userSchema);
 
 module.exports = userModel;

@@ -11,7 +11,7 @@ const { io: SocketIOClient } = require("socket.io-client");
 const fs = require("fs");
 const path = require("path");
 
-const BASE_URL = process.env.BASE_URL || "http://localhost";
+const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:8000";
 const PASSWORD = "Test@1234";
 const MESSAGES_PER_USER = parseInt(process.env.MESSAGES_PER_USER || "5", 10);
 const MESSAGE_INTERVAL_MS = parseInt(process.env.MESSAGE_INTERVAL_MS || "1000", 10);

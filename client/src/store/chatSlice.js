@@ -3,90 +3,123 @@ import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL;
 
-//API call to fetch chat list
 export const fetchChatList = createAsyncThunk(
   "chat/fetchChatList",
   async () => {
-    const { data } = await axios.get(
-      `${API}/api/message/getchats`,
-      {
-        withCredentials: true,
-      }
-    );
+    const { data } = await axios.get(`${API}/api/message/getchats`, {
+      withCredentials: true,
+    });
     return data.data || data;
-  }
+  },
 );
 
+// Helper — pick a sortable timestamp from a chat. Falls back to the chat's
+// own updatedAt if lastMessage has none (shouldn't happen, but defensive).
+function chatTimestamp(chat) {
+  const raw = chat.lastMessage?.updatedAt || chat.updatedAt;
+  const t = raw ? new Date(raw).getTime() : 0;
+  return Number.isNaN(t) ? 0 : t;
+}
 
-// Redux slice for chat state management to store chat list and active chat
+// Helper — mutate every participant matching userId in both the chatList
+// and the activeChat, then keep chatList sorted.
+function patchParticipantStatus(state, userId, isOnline, lastSeen) {
+  const apply = (participant) => {
+    if (participant._id !== userId) return;
+    participant.isOnline = isOnline;
+    if (lastSeen !== undefined) participant.lastSeen = lastSeen;
+  };
+
+  state.chatList.forEach((chat) => {
+    (chat.participants || []).forEach(apply);
+  });
+  if (state.activeChat) {
+    (state.activeChat.participants || []).forEach(apply);
+  }
+}
+
 const chatSlice = createSlice({
   name: "chat",
   initialState: {
     chatList: [],
     status: "idle",
+    error: null,
     activeChat: null,
   },
 
-  // Reducers for chat state management
   reducers: {
-
-    //It keeps track of the user which is currently being chatted
     setActiveChat: (state, action) => {
-      state.activeChat = action.payload;
+      const payload = action.payload;
+      const chat = payload?.chat ?? payload;
+      const userId = payload?.userId ?? null;
+
+      state.activeChat = chat;
+
+      if (!chat?._id) return;
+
+      const existing = state.chatList.find((c) => c._id === chat._id);
+      if (!existing?.participantInfo || !userId) return;
+
+      const mine = existing.participantInfo[String(userId)];
+      if (mine && typeof mine.unreadCount === "number") {
+        mine.unreadCount = 0;
+      }
     },
 
-    //It updates the chat list when a new message is received
     updateChatList: (state, action) => {
       const data = action.payload;
-      const existingChat = state.chatList.find(
-        (chat) => chat._id === data.chatId
-      );
-      if (existingChat) {
-        existingChat.lastMessage = {
-          ...existingChat.lastMessage,
-          content: data.content,
-          updatedAt: new Date().toISOString(),
-        };
-      } else {
-        state.chatList.unshift(data);
+      const existingChat = state.chatList.find((c) => c._id === data.chatId);
+
+      if (!existingChat) {
+        // Do NOT unshift a raw { chatId, content } payload — it would
+        // render as a chat with no _id / participants. The caller should
+        // refetch chatList if this happens (e.g. chat created via search).
+        return;
       }
+
+      const now = new Date().toISOString();
+      existingChat.lastMessage = {
+        ...(existingChat.lastMessage || {}),
+        content: data.content,
+        updatedAt: now,
+      };
+      existingChat.updatedAt = now;
+
+      // Re-sort so the active chat jumps to the top.
+      state.chatList.sort((a, b) => chatTimestamp(b) - chatTimestamp(a));
     },
 
-    //It updates the online status of the users in the chat list
-    updateOnlineStatus : (state,action)=>{
-      const userId = action.payload;
-      state.chatList.forEach(chat => chat.participants.forEach(participant=> participant._id === userId && (participant.isOnline = true)));
-      if(state.activeChat){
-        state.activeChat.participants.forEach(participant=> participant._id === userId && (participant.isOnline = true));
-      }
+    updateOnlineStatus: (state, action) => {
+      patchParticipantStatus(state, action.payload, true, undefined);
     },
 
-    //It updates the offline status of the users in the chat list
-    updateOfflineStatus : (state,action)=>{
-      const {userId, lastSeen} = action.payload;
-      state.chatList.forEach(chat => chat.participants.forEach(participant=> participant._id === userId && (participant.isOnline = false,participant.lastSeen = lastSeen)));
-      if(state.activeChat){
-        state.activeChat.participants.forEach(participant=> participant._id === userId && (participant.isOnline = false,participant.lastSeen = lastSeen));
-      }
+    updateOfflineStatus: (state, action) => {
+      const { userId, lastSeen } = action.payload;
+      patchParticipantStatus(state, userId, false, lastSeen);
     },
   },
 
-
-  // Extra reducers for chat state management
   extraReducers: (builder) => {
     builder
       .addCase(fetchChatList.pending, (state) => {
         state.status = "pending";
+        state.error = null;
       })
       .addCase(fetchChatList.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.chatList = action.payload;
       })
-      .addCase(fetchChatList.rejected, (state) => {
+      .addCase(fetchChatList.rejected, (state, action) => {
         state.status = "failed";
+        state.error = action.error.message || "Failed to load chats";
       });
   },
 });
 
-export const { setActiveChat, updateChatList,updateOnlineStatus,updateOfflineStatus } = chatSlice.actions;
+export const {
+  setActiveChat,
+  updateChatList,
+  updateOnlineStatus,
+  updateOfflineStatus,
+} = chatSlice.actions;
 export default chatSlice.reducer;
